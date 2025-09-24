@@ -37,6 +37,16 @@ export default function EventPage({ event, childEvents, parentEvent, relatedEven
     return `${Math.round(diffDays / 365)} years`
   }
 
+  // Process content to add clickable citations
+  const processContentWithCitations = (content) => {
+    if (!content) return content
+    
+    // Replace citation patterns [[1]] with clickable links
+    return content.replace(/\[\[(\d+)\]\]/g, (match, num) => {
+      return `<a href="#ref-${num}" class="citation-link" title="Click to view source">[${num}]</a>`
+    })
+  }
+
   const renderTimeline = () => {
     if (!event.sub_events || event.sub_events.length === 0) return null
 
@@ -79,6 +89,68 @@ export default function EventPage({ event, childEvents, parentEvent, relatedEven
               </div>
             </div>
           ))}
+        </div>
+      </section>
+    )
+  }
+
+  const renderReferences = () => {
+    if (!event.references || event.references.length === 0) return null
+
+    return (
+      <section className="references-section">
+        <h2>References and Sources</h2>
+        <p className="references-description">
+          All factual claims in this documentation are supported by the following verified sources:
+        </p>
+        
+        <div className="references-container">
+          {event.references.map((ref) => (
+            <div key={ref.id} id={`ref-${ref.id}`} className="reference-item">
+              <div className="reference-header">
+                <span className="reference-number">[{ref.id}]</span>
+                <div className="reference-meta">
+                  <span className="reference-source">{ref.source}</span>
+                  <span className="reference-date">{ref.date}</span>
+                  <span className={`reference-reliability ${ref.reliability}`}>
+                    {ref.reliability.replace('_', ' ')}
+                  </span>
+                </div>
+              </div>
+              
+              <h4 className="reference-title">{ref.title}</h4>
+              
+              <div className="reference-details">
+                <p className="reference-context">
+                  <strong>Context:</strong> {ref.context}
+                </p>
+                <p className="reference-type">
+                  <strong>Type:</strong> {ref.type.replace('_', ' ')}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="reliability-guide">
+          <h3>Source Reliability Guide</h3>
+          <div className="reliability-legend">
+            <div className="reliability-item">
+              <span className="reliability-indicator primary_source"></span>
+              <span className="reliability-label">Primary Source</span>
+              <span className="reliability-description">Original documents, official statements, direct recordings</span>
+            </div>
+            <div className="reliability-item">
+              <span className="reliability-indicator high"></span>
+              <span className="reliability-label">High Reliability</span>
+              <span className="reliability-description">Established news organizations, verified reporting</span>
+            </div>
+            <div className="reliability-item">
+              <span className="reliability-indicator medium"></span>
+              <span className="reliability-label">Medium Reliability</span>
+              <span className="reliability-description">Expert analysis, secondary reporting</span>
+            </div>
+          </div>
         </div>
       </section>
     )
@@ -227,11 +299,11 @@ export default function EventPage({ event, childEvents, parentEvent, relatedEven
           </div>
         </section>
 
-        {/* Main Content */}
+        {/* Main Content with Citations */}
         <section className="event-content">
           <div 
             className="content-body"
-            dangerouslySetInnerHTML={{ __html: contentHtml }}
+            dangerouslySetInnerHTML={{ __html: processContentWithCitations(contentHtml) }}
           />
         </section>
 
@@ -313,11 +385,11 @@ export default function EventPage({ event, childEvents, parentEvent, relatedEven
                       {format(new Date(caseStudy.date), 'MMMM d, yyyy')}
                     </p>
                     <p className="linked-excerpt">{caseStudy.excerpt}</p>
+
+
                     <div className="linked-tags">
                       {caseStudy.tags.slice(0, 3).map(tag => (
-                        <span key={tag} className
-
-="tag-item">{tag}</span>
+                        <span key={tag} className="tag-item">{tag}</span>
                       ))}
                     </div>
                   </div>
@@ -356,19 +428,8 @@ export default function EventPage({ event, childEvents, parentEvent, relatedEven
           </section>
         )}
 
-        {/* Sources and Documentation */}
-        {event.sources && event.sources.length > 0 && (
-          <section className="sources-section">
-            <h2>Sources and References</h2>
-            <div className="sources-container">
-              {event.sources.map((source, index) => (
-                <div key={index} className="source-item">
-                  {source}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        {/* References Section */}
+        {renderReferences()}
       </article>
 
       <style jsx>{`
@@ -602,6 +663,29 @@ export default function EventPage({ event, childEvents, parentEvent, relatedEven
           margin-bottom: 0.75rem;
         }
         
+        /* Citation Styles */
+        :global(.citation-link) {
+          color: var(--accent-primary);
+          text-decoration: none;
+          font-weight: 600;
+          font-size: 0.85rem;
+          padding: 0.1rem 0.3rem;
+          border-radius: 3px;
+          background: var(--background-secondary);
+          border: 1px solid var(--border-primary);
+          margin: 0 0.1rem;
+          transition: var(--transition);
+          display: inline-block;
+          line-height: 1;
+        }
+        
+        :global(.citation-link:hover) {
+          background: var(--accent-primary);
+          color: white;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
         /* Timeline Styles */
         .timeline-section {
           background: var(--background-primary);
@@ -725,6 +809,189 @@ export default function EventPage({ event, childEvents, parentEvent, relatedEven
           margin: 0;
         }
         
+        /* References Section Styles */
+        .references-section {
+          background: var(--background-primary);
+          padding: 2.5rem;
+          border-radius: var(--radius-lg);
+          margin-bottom: 3rem;
+          box-shadow: var(--shadow-sm);
+          border-top: 4px solid var(--accent-primary);
+        }
+        
+        .references-section h2 {
+          margin-bottom: 1rem;
+          color: var(--text-primary);
+          font-size: 1.5rem;
+        }
+        
+        .references-description {
+          color: var(--text-muted);
+          margin-bottom: 2rem;
+          line-height: 1.6;
+        }
+        
+        .references-container {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+          margin-bottom: 2rem;
+        }
+        
+        .reference-item {
+          background: var(--background-secondary);
+          border: 1px solid var(--border-secondary);
+          border-radius: var(--radius-md);
+          padding: 1.5rem;
+          scroll-margin-top: 100px;
+        }
+        
+        .reference-item:target {
+          border-color: var(--accent-primary);
+          box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.1);
+        }
+        
+        .reference-header {
+          display: flex;
+          align-items: flex-start;
+          gap: 1rem;
+          margin-bottom: 1rem;
+        }
+        
+        .reference-number {
+          background: var(--accent-primary);
+          color: white;
+          padding: 0.3rem 0.6rem;
+          border-radius: var(--radius-sm);
+          font-weight: 600;
+          font-size: 0.9rem;
+          flex-shrink: 0;
+        }
+        
+        .reference-meta {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+          flex: 1;
+        }
+        
+        .reference-source {
+          font-weight: 600;
+          color: var(--text-primary);
+          font-size: 1rem;
+        }
+        
+        .reference-date {
+          color: var(--text-muted);
+          font-size: 0.9rem;
+        }
+        
+        .reference-reliability {
+          padding: 0.2rem 0.6rem;
+          border-radius: var(--radius-sm);
+          font-size: 0.8rem;
+          font-weight: 500;
+          text-transform: capitalize;
+          align-self: flex-start;
+        }
+        
+        .reference-reliability.primary_source {
+          background: #10b981;
+          color: white;
+        }
+        
+        .reference-reliability.high {
+          background: #3b82f6;
+          color: white;
+        }
+        
+        .reference-reliability.medium {
+          background: #f59e0b;
+          color: white;
+        }
+        
+        .reference-title {
+          color: var(--text-primary);
+          margin-bottom: 1rem;
+          font-size: 1.1rem;
+          font-weight: 600;
+        }
+        
+        .reference-details {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        
+        .reference-context,
+        .reference-type {
+          color: var(--text-secondary);
+          line-height: 1.5;
+          margin: 0;
+        }
+        
+        .reference-context strong,
+        .reference-type strong {
+          color: var(--text-primary);
+        }
+        
+        .reliability-guide {
+          background: var(--background-tertiary);
+          padding: 1.5rem;
+          border-radius: var(--radius-md);
+          border: 1px solid var(--border-primary);
+        }
+        
+        .reliability-guide h3 {
+          margin-bottom: 1rem;
+          color: var(--text-primary);
+          font-size: 1.1rem;
+        }
+        
+        .reliability-legend {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        
+        .reliability-item {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+        
+        .reliability-
+
+indicator {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          flex-shrink: 0;
+        }
+        
+        .reliability-indicator.primary_source {
+          background: #10b981;
+        }
+        
+        .reliability-indicator.high {
+          background: #3b82f6;
+        }
+        
+        .reliability-indicator.medium {
+          background: #f59e0b;
+        }
+        
+        .reliability-label {
+          font-weight: 600;
+          color: var(--text-primary);
+          min-width: 120px;
+        }
+        
+        .reliability-description {
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+        }
+        
         /* Section Styles */
         .child-events-section,
         .related-section,
@@ -844,32 +1111,6 @@ export default function EventPage({ event, childEvents, parentEvent, relatedEven
           font-size: 0.95rem;
         }
         
-        .sources-section {
-          background: var(--background-tertiary);
-          padding: 2.5rem;
-          border-radius: var(--radius-lg);
-          margin-bottom: 2rem;
-        }
-        
-        .sources-section h2 {
-          margin-bottom: 2rem;
-          color: var(--text-primary);
-        }
-        
-        .sources-container {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-        
-        .source-item {
-          padding: 1rem;
-          background: var(--background-primary);
-          border-radius: var(--radius-md);
-          color: var(--text-secondary);
-          border-left: 4px solid var(--accent-primary);
-        }
-        
         .error-page {
           text-align: center;
           padding: 4rem 2rem;
@@ -932,12 +1173,31 @@ export default function EventPage({ event, childEvents, parentEvent, relatedEven
           
           .event-details,
           .timeline-section,
-          .sources-section {
+          .references-section {
             padding: 1.5rem;
           }
           
           .breadcrumb-list {
             flex-wrap: wrap;
+          }
+          
+          .reference-header {
+            flex-direction: column;
+            gap: 0.75rem;
+          }
+          
+          .reference-meta {
+            align-items: flex-start;
+          }
+          
+          .reliability-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+          }
+          
+          .reliability-label {
+            min-width: auto;
           }
         }
       `}</style>
@@ -965,9 +1225,7 @@ export async function getStaticProps({ params }) {
   // Process markdown content
   const processedContent = await remark()
     .use(html)
-    .process(event.
-
-content)
+    .process(event.content)
   const contentHtml = processedContent.toString()
 
   // Get child events
