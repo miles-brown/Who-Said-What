@@ -2,12 +2,14 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { getAllCases } from '../lib/cases'
 import { getAllProfiles } from '../lib/profiles'
+import { getAllEvents } from '../lib/events'
 import Layout from '../components/Layout'
 import { format } from 'date-fns'
 
-export default function Home({ allCases, allProfiles }) {
+export default function Home({ allCases, allProfiles, allEvents }) {
   const recentCases = allCases.slice(0, 3)
   const featuredProfiles = allProfiles.slice(0, 4)
+  const recentEvents = allEvents.slice(0, 3)
 
   return (
     <Layout>
@@ -31,6 +33,9 @@ export default function Home({ allCases, allProfiles }) {
           <div className="hero-actions">
             <Link href="/cases" className="btn btn-primary">
               Browse Case Studies
+            </Link>
+            <Link href="/events" className="btn btn-outline">
+              View Timeline
             </Link>
             <Link href="/profiles" className="btn btn-outline">
               View Profiles
@@ -498,11 +503,13 @@ export default function Home({ allCases, allProfiles }) {
 export async function getStaticProps() {
   const allCases = getAllCases()
   const allProfiles = getAllProfiles()
+  const allEvents = getAllEvents()
   
   return {
     props: {
       allCases,
-      allProfiles
+      allProfiles,
+      allEvents
     }
   }
 }

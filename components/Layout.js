@@ -46,6 +46,9 @@ export default function Layout({ children, title = "Who Said What", description 
             <Link href="/cases" className={isActive('/cases') ? 'active' : ''}>
               Cases
             </Link>
+            <Link href="/events" className={router.pathname.startsWith('/events') ? 'active' : ''}>
+              Events
+            </Link>
             <Link href="/profiles" className={isActive('/profiles') ? 'active' : ''}>
               Profiles
             </Link>
