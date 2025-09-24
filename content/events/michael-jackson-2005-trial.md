@@ -6,7 +6,7 @@ duration: "4 months, 2 weeks"
 location: "Santa Barbara County Superior Court, California"
 event_type: "legal_proceeding"
 status: "documented"
-significance: "high"
+
 is_milestone: true
 summary: "High-profile criminal trial of Michael Jackson on charges of child molestation, with extensive media coverage and public scrutiny."
 excerpt: "The 2005 trial of Michael Jackson marked a pivotal moment in entertainment history, featuring intense media coverage, celebrity testimony, and ultimately Jackson's acquittal on all charges."

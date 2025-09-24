@@ -5,7 +5,7 @@ end_date: "2022-12-31"
 location: "Various social media platforms and interviews"
 event_type: "incident"
 status: "documented"
-significance: "high"
+
 is_milestone: true
 summary: "Series of antisemitic statements made by Kanye West across multiple platforms, resulting in widespread condemnation and business consequences."
 excerpt: "Kanye West's antisemitic comments in October 2022 triggered immediate backlash from the entertainment industry, leading to terminated partnerships and widespread condemnation."

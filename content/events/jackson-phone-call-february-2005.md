@@ -4,7 +4,7 @@ event_date: "2005-02-17"
 location: "Neverland Ranch, California"
 event_type: "incident"
 status: "documented"
-significance: "medium"
+
 parent_event: "michael-jackson-2005-trial"
 summary: "Recording of a phone conversation between Michael Jackson and an unidentified caller discussing trial strategy and media response."
 excerpt: "A recorded phone conversation revealed Jackson's concerns about media coverage and trial proceedings, providing insight into his state of mind during the legal proceedings."

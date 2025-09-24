@@ -50,20 +50,17 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
       <article className="event-article">
         {/* Event Header */}
         <header className="event-header">
-          <div className="event-meta">
+          <div className="header-navigation">
             <Link href="/events" className="back-link">
               ← Back to Events
             </Link>
             <div className="event-badges">
-              <span className={`event-type badge badge-${event.event_type === 'incident' ? 'danger' : 'primary'}`}>
-                {event.event_type}
-              </span>
-              <span className={`significance-badge ${event.significance}`}>
-                {event.significance} significance
+              <span className="event-type-badge">
+                {event.event_type.replace('_', ' ')}
               </span>
               {event.is_milestone && (
-                <span className="milestone-badge badge badge-warning">
-                  Milestone Event
+                <span className="milestone-badge">
+                  Key Event
                 </span>
               )}
             </div>
@@ -78,59 +75,74 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
 
         {/* Event Details */}
         <section className="event-details">
-          <h2>Event Details</h2>
-          <div className="details-grid">
-            <div className="detail-item">
+          <h2>Event Information</h2>
+          <div className="details-container">
+            <div className="detail-row">
               <strong>Date:</strong> 
-              <time dateTime={event.event_date}>
-                {format(new Date(event.event_date), 'MMMM d, yyyy')}
-              </time>
-              <span className="time-ago">
-                ({formatDistanceToNow(new Date(event.event_date), { addSuffix: true })})
-              </span>
+              <div className="detail-content">
+                <time dateTime={event.event_date}>
+                  {format(new Date(event.event_date), 'MMMM d, yyyy')}
+                </time>
+                <span className="time-context">
+                  ({formatDistanceToNow(new Date(event.event_date), { addSuffix: true })})
+                </span>
+              </div>
             </div>
             
             {event.end_date && (
-              <div className="detail-item">
+              <div className="detail-row">
                 <strong>End Date:</strong> 
-                <time dateTime={event.end_date}>
-                  {format(new Date(event.end_date), 'MMMM d, yyyy')}
-                </time>
+                <div className="detail-content">
+                  <time dateTime={event.end_date}>
+                    {format(new Date(event.end_date), 'MMMM d, yyyy')}
+                  </time>
+                </div>
               </div>
             )}
             
             {formatDuration() && (
-              <div className="detail-item">
-                <strong>Duration:</strong> {formatDuration()}
+              <div className="detail-row">
+                <strong>Duration:</strong> 
+                <div className="detail-content">{formatDuration()}</div>
               </div>
             )}
             
             {event.location && (
-              <div className="detail-item">
-                <strong>Location:</strong> {event.location}
+              <div className="detail-row">
+                <strong>Location:</strong> 
+                <div className="detail-content">{event.location}</div>
               </div>
             )}
             
+            <div className="detail-row">
+              <strong>Type:</strong> 
+              <div className="detail-content">{event.event_type.replace('_', ' ')}</div>
+            </div>
+            
             {event.participants && event.participants.length > 0 && (
-              <div className="detail-item participants">
+              <div className="detail-row">
                 <strong>Key Participants:</strong>
-                <div className="participants-list">
-                  {event.participants.map(participant => (
-                    <span key={participant} className="participant-tag">
-                      {participant}
-                    </span>
-                  ))}
+                <div className="detail-content">
+                  <div className="participants-list">
+                    {event.participants.map(participant => (
+                      <span key={participant} className="participant-item">
+                        {participant}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
             
             {event.categories && event.categories.length > 0 && (
-              <div className="detail-item categories">
+              <div className="detail-row">
                 <strong>Categories:</strong>
-                <div className="category-tags">
-                  {event.categories.map(category => (
-                    <span key={category} className="badge">{category}</span>
-                  ))}
+                <div className="detail-content">
+                  <div className="categories-list">
+                    {event.categories.map(category => (
+                      <span key={category} className="category-item">{category}</span>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -139,11 +151,11 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
 
         {/* Parent Event */}
         {event.parent_event && (
-          <section className="parent-event">
+          <section className="parent-event-section">
             <h2>Part of Larger Event</h2>
-            <p>This event is a sub-event of a larger incident or series.</p>
+            <p>This event is part of a larger incident or series of related events.</p>
             <Link href={`/events/${event.parent_event}`} className="btn btn-outline">
-              View Parent Event
+              View Main Event
             </Link>
           </section>
         )}
@@ -158,30 +170,25 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
 
         {/* Sub-Events */}
         {subEvents.length > 0 && (
-          <section className="sub-events">
-            <h2>Sub-Events</h2>
+          <section className="related-section">
+            <h2>Related Events</h2>
             <p className="section-description">
-              Related events that occurred as part of or in response to this incident:
+              Events that occurred as part of or in response to this incident:
             </p>
             
-            <div className="sub-events-timeline">
+            <div className="related-events-grid">
               {subEvents.map((subEvent) => (
                 <Link href={`/events/${subEvent.slug}`} key={subEvent.slug}>
-                  <div className="sub-event-card">
-                    <div className="sub-event-marker">
-                      <div className={`timeline-dot ${subEvent.significance}`}></div>
-                    </div>
-                    <div className="sub-event-content">
-                      <h3>{subEvent.title}</h3>
-                      <time className="sub-event-date">
-                        {format(new Date(subEvent.event_date), 'MMM d, yyyy')}
-                      </time>
-                      <p className="sub-event-excerpt">{subEvent.excerpt}</p>
-                      <div className="sub-event-meta">
-                        <span className={`event-type badge badge-${subEvent.event_type === 'incident' ? 'danger' : 'primary'}`}>
-                          {subEvent.event_type}
-                        </span>
-                      </div>
+                  <div className="related-event-card">
+                    <h3>{subEvent.title}</h3>
+                    <time className="event-date">
+                      {format(new Date(subEvent.event_date), 'MMMM d, yyyy')}
+                    </time>
+                    <p className="event-excerpt">{subEvent.excerpt}</p>
+                    <div className="event-meta">
+                      <span className="event-type-tag">
+                        {subEvent.event_type.replace('_', ' ')}
+                      </span>
                     </div>
                   </div>
                 </Link>
@@ -192,8 +199,8 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
 
         {/* Related Events */}
         {relatedEvents.length > 0 && (
-          <section className="related-events">
-            <h2>Related Events</h2>
+          <section className="related-section">
+            <h2>Connected Events</h2>
             <p className="section-description">
               Other events connected to or influenced by this incident:
             </p>
@@ -204,15 +211,12 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
                   <div className="related-event-card">
                     <h3>{relatedEvent.title}</h3>
                     <time className="event-date">
-                      {format(new Date(relatedEvent.event_date), 'MMM d, yyyy')}
+                      {format(new Date(relatedEvent.event_date), 'MMMM d, yyyy')}
                     </time>
                     <p className="event-excerpt">{relatedEvent.excerpt}</p>
                     <div className="event-meta">
-                      <span className={`event-type badge badge-${relatedEvent.event_type === 'incident' ? 'danger' : 'primary'}`}>
-                        {relatedEvent.event_type}
-                      </span>
-                      <span className={`significance-badge ${relatedEvent.significance}`}>
-                        {relatedEvent.significance}
+                      <span className="event-type-tag">
+                        {relatedEvent.event_type.replace('_', ' ')}
                       </span>
                     </div>
                   </div>
@@ -224,24 +228,24 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
 
         {/* Linked Case Studies */}
         {linkedCases.length > 0 && (
-          <section className="linked-cases">
+          <section className="linked-section">
             <h2>Related Case Studies</h2>
             <p className="section-description">
               Detailed case studies that document this event or its consequences:
             </p>
             
-            <div className="cases-grid">
+            <div className="linked-grid">
               {linkedCases.map((caseStudy) => (
                 <Link href={`/cases/${caseStudy.slug}`} key={caseStudy.slug}>
-                  <div className="case-card">
+                  <div className="linked-card case-card">
                     <h3>{caseStudy.title}</h3>
-                    <p className="case-date">
+                    <p className="linked-date">
                       {format(new Date(caseStudy.date), 'MMMM d, yyyy')}
                     </p>
-                    <p className="case-excerpt">{caseStudy.excerpt}</p>
-                    <div className="case-tags">
+                    <p className="linked-excerpt">{caseStudy.excerpt}</p>
+                    <div className="linked-tags">
                       {caseStudy.tags.slice(0, 3).map(tag => (
-                        <span key={tag} className="badge">{tag}</span>
+                        <span key={tag} className="tag-item">{tag}</span>
                       ))}
                     </div>
                   </div>
@@ -253,26 +257,26 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
 
         {/* Linked Profiles */}
         {linkedProfiles.length > 0 && (
-          <section className="linked-profiles">
+          <section className="linked-section">
             <h2>Related Profiles</h2>
             <p className="section-description">
               Profiles of individuals and organizations involved in this event:
             </p>
             
-            <div className="profiles-grid">
+            <div className="linked-grid">
               {linkedProfiles.map((profile) => (
                 <Link href={`/profiles/${profile.slug}`} key={profile.slug}>
-                  <div className="profile-card">
+                  <div className="linked-card profile-card">
                     <div className="profile-header">
                       <h3>{profile.name}</h3>
-                      <span className={`profile-type badge badge-${profile.type === 'individual' ? 'primary' : 'secondary'}`}>
+                      <span className="profile-type-tag">
                         {profile.type}
                       </span>
                     </div>
                     {profile.title && (
                       <p className="profile-title">{profile.title}</p>
                     )}
-                    <p className="profile-excerpt">{profile.excerpt}</p>
+                    <p className="linked-excerpt">{profile.excerpt}</p>
                   </div>
                 </Link>
               ))}
@@ -282,13 +286,15 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
 
         {/* Sources and Documentation */}
         {event.sources && event.sources.length > 0 && (
-          <section className="sources">
+          <section className="sources-section">
             <h2>Sources and References</h2>
-            <ul className="sources-list">
+            <div className="sources-container">
               {event.sources.map((source, index) => (
-                <li key={index}>{source}</li>
+                <div key={index} className="source-item">
+                  {source}
+                </div>
               ))}
-            </ul>
+            </div>
           </section>
         )}
       </article>
@@ -297,122 +303,53 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
         .event-article {
           max-width: 900px;
           margin: 0 auto;
+          padding: 0 1rem;
         }
         
         .event-header {
           text-align: center;
-          padding: 2rem 0;
+          padding: 2rem 0 3rem;
           border-bottom: 1px solid var(--border-primary);
-          margin-bottom: 2rem;
+          margin-bottom: 3rem;
         }
         
-        .event-meta {
+        .header-navigation {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 1.5rem;
+          margin-bottom: 2rem;
         }
         
         .back-link {
           color: var(--accent-primary);
           text-decoration: none;
           font-weight: 500;
+          padding: 0.5rem 1rem;
+          border-radius: var(--radius-sm);
+          transition: var(--transition);
         }
         
         .back-link:hover {
-          text-decoration: underline;
+          background: var(--background-secondary);
         }
         
         .event-badges {
           display: flex;
-          gap: 0.5rem;
+          gap: 0.75rem;
           flex-wrap: wrap;
         }
         
-        .event-header h1 {
-          font-size: 2.5rem;
-          margin-bottom: 1rem;
-          color: var(--text-primary);
-        }
-        
-        .event-summary {
-          font-size: 1.2rem;
-          color: var(--text-secondary);
-          font-weight: 500;
-          max-width: 700px;
-          margin: 0 auto;
-        }
-        
-        .event-details {
-          background: var(--background-primary);
-          padding: 2rem;
-          border-radius: var(--radius-lg);
-          margin-bottom: 2rem;
-          box-shadow: var(--shadow-sm);
-        }
-        
-        .event-details h2 {
-          margin-bottom: 1.5rem;
-          color: var(--text-primary);
-        }
-        
-        .details-grid {
-          display: grid;
-          gap: 1rem;
-        }
-        
-        .detail-item {
-          display: flex;
-          flex-direction: column;
-          gap: 0.25rem;
-        }
-        
-        .detail-item strong {
-          color: var(--text-primary);
+        .event-type-badge,
+        .milestone-badge {
+          padding: 0.5rem 1rem;
+          border-radius: var(--radius-sm);
+          font-size: 0.85rem;
           font-weight: 600;
-        }
-        
-        .time-ago {
-          color: var(--text-muted);
-          font-size: 0.9rem;
-        }
-        
-        .participants-list,
-        .category-tags {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.5rem;
-          margin-top: 0.5rem;
-        }
-        
-        .participant-tag {
-          background: var(--background-secondary);
-          padding: 0.25rem 0.6rem;
-          border-radius: var(--radius-sm);
-          font-size: 0.9rem;
-          color: var(--text-primary);
-        }
-        
-        .significance-badge {
-          padding: 0.25rem 0.6rem;
-          border-radius: var(--radius-sm);
-          font-size: 0.8rem;
-          font-weight: 500;
           text-transform: capitalize;
         }
         
-        .significance-badge.low {
-          background: var(--accent-success);
-          color: white;
-        }
-        
-        .significance-badge.medium {
-          background: var(--accent-warning);
-          color: white;
-        }
-        
-        .significance-badge.high {
-          background: var(--accent-danger);
+        .event-type-badge {
+          background: var(--accent-primary);
           color: white;
         }
         
@@ -421,21 +358,98 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
           color: white;
         }
         
-        .parent-event {
-          background: var(--background-tertiary);
-          padding: 1.5rem;
+        .event-header h1 {
+          font-size: 2.5rem;
+          margin-bottom: 1.5rem;
+          color: var(--text-primary);
+          line-height: 1.2;
+        }
+        
+        .event-summary {
+          font-size: 1.2rem;
+          color: var(--text-secondary);
+          font-weight: 500;
+          max-width: 700px;
+          margin: 0 auto;
+          line-height: 1.5;
+        }
+        
+        .event-details {
+          background: var(--background-primary);
+          padding: 2.5rem;
           border-radius: var(--radius-lg);
+          margin-bottom: 3rem;
+          box-shadow: var(--shadow-sm);
+        }
+        
+        .event-details h2 {
           margin-bottom: 2rem;
+          color: var(--text-primary);
+          font-size: 1.5rem;
+        }
+        
+        .details-container {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+        
+        .detail-row {
+          display: flex;
+          align-items: flex-start;
+          gap: 1rem;
+        }
+        
+        .detail-row strong {
+          color: var(--text-primary);
+          font-weight: 600;
+          min-width: 120px;
+          flex-shrink: 0;
+        }
+        
+        .detail-content {
+          flex: 1;
+          color: var(--text-secondary);
+        }
+        
+        .time-context {
+          color: var(--text-muted);
+          font-size: 0.9rem;
+          margin-left: 0.5rem;
+        }
+        
+        .participants-list,
+        .categories-list {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        
+        .participant-item,
+        .category-item {
+          background: var(--background-secondary);
+          padding: 0.4rem 0.8rem;
+          border-radius: var(--radius-sm);
+          font-size: 0.9rem;
+          color: var(--text-primary);
+          border: 1px solid var(--border-primary);
+        }
+        
+        .parent-event-section {
+          background: var(--background-tertiary);
+          padding: 2rem;
+          border-radius: var(--radius-lg);
+          margin-bottom: 3rem;
           text-align: center;
         }
         
-        .parent-event h2 {
-          margin-bottom: 0.5rem;
+        .parent-event-section h2 {
+          margin-bottom: 1rem;
           color: var(--text-primary);
         }
         
-        .parent-event p {
-          margin-bottom: 1rem;
+        .parent-event-section p {
+          margin-bottom: 1.5rem;
           color: var(--text-secondary);
         }
         
@@ -450,170 +464,111 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
         
         .content-body h2 {
           color: var(--text-primary);
-          margin-top: 2rem;
-          margin-bottom: 1rem;
+          margin-top: 2.5rem;
+          margin-bottom: 1.5rem;
+          font-size: 1.5rem;
         }
         
         .content-body h3 {
           color: var(--text-primary);
-          margin-top: 1.5rem;
-          margin-bottom: 0.75rem;
+          margin-top: 2rem;
+          margin-bottom: 1rem;
+          font-size: 1.25rem;
         }
         
         .content-body p {
-          margin-bottom: 1rem;
+          margin-bottom: 1.5rem;
         }
         
         .content-body ul, .content-body ol {
-          margin-bottom: 1rem;
+          margin-bottom: 1.5rem;
           padding-left: 2rem;
         }
         
         .content-body li {
-          margin-bottom: 0.5rem;
+          margin-bottom: 0.75rem;
         }
         
-        .sub-events,
-        .related-events,
-        .linked-cases,
-        .linked-profiles {
+        .related-section,
+        .linked-section {
           margin-bottom: 3rem;
         }
         
-        .sub-events h2,
-        .related-events h2,
-        .linked-cases h2,
-        .linked-profiles h2 {
-          margin-bottom: 0.5rem;
+        .related-section h2,
+        .linked-section h2 {
+          margin-bottom: 1rem;
           color: var(--text-primary);
+          font-size: 1.5rem;
         }
         
         .section-description {
           color: var(--text-muted);
-          margin-bottom: 1.5rem;
-        }
-        
-        .sub-events-timeline {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-        
-        .sub-event-card {
-          display: flex;
-          background: var(--background-primary);
-          border: 1px solid var(--border-secondary);
-          border-radius: var(--radius-lg);
-          padding: 1.5rem;
-          cursor: pointer;
-          transition: var(--transition);
-          box-shadow: var(--shadow-sm);
-        }
-        
-        .sub-event-card:hover {
-          transform: translateY(-2px);
-          box-shadow: var(--shadow-md);
-        }
-        
-        .sub-event-marker {
-          margin-right: 1rem;
-          display: flex;
-          align-items: flex-start;
-          padding-top: 0.25rem;
-        }
-        
-        .timeline-dot {
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          border: 2px solid var(--background-primary);
-        }
-        
-        .timeline-dot.low { background: var(--accent-success); }
-        .timeline-dot.medium { background: var(--accent-warning); }
-        .timeline-dot.high { background: var(--accent-danger); }
-        
-        .sub-event-content {
-          flex: 1;
-        }
-        
-        .sub-event-card h3 {
-          margin-bottom: 0.5rem;
-          color: var(--text-primary);
-        }
-        
-        .sub-event-date {
-          color: var(--text-muted);
-          font-size: 0.9rem;
-          margin-bottom: 0.5rem;
-          display: block;
-        }
-        
-        .sub-event-excerpt {
-          color: var(--text-secondary);
-          line-height: 1.5;
-          margin-bottom: 1rem;
-        }
-        
-        .sub-event-meta {
-          display: flex;
-          gap: 0.5rem;
+          margin-bottom: 2rem;
+          line-height: 1.6;
         }
         
         .related-events-grid,
-        .cases-grid,
-        .profiles-grid {
+        .linked-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
           gap: 1.5rem;
         }
         
         .related-event-card,
-        .case-card,
-        .profile-card {
+        .linked-card {
           background: var(--background-primary);
           border: 1px solid var(--border-secondary);
           border-radius: var(--radius-lg);
-          padding: 1.5rem;
+          padding: 2rem;
           cursor: pointer;
           transition: var(--transition);
           box-shadow: var(--shadow-sm);
         }
         
         .related-event-card:hover,
-        .case-card:hover,
-        .profile-card:hover {
-          transform: translateY(-2px);
+        .linked-card:hover {
+          transform: translateY(-3px);
           box-shadow: var(--shadow-md);
         }
         
         .related-event-card h3,
-        .case-card h3,
-        .profile-card h3 {
-          margin-bottom: 0.5rem;
+        .linked-card h3 {
+          margin-bottom: 1rem;
           color: var(--text-primary);
+          font-size: 1.2rem;
         }
         
         .event-date,
-        .case-date {
+        .linked-date {
           color: var(--text-muted);
           font-size: 0.9rem;
           margin-bottom: 1rem;
+          display: block;
         }
         
         .event-excerpt,
-        .case-excerpt,
-        .profile-excerpt {
+        .linked-excerpt {
           color: var(--text-secondary);
-          line-height: 1.5;
-          margin-bottom: 1rem;
+          line-height: 1.6;
+          margin-bottom: 1.5rem;
         }
         
         .event-meta,
-        .case-tags {
+        .linked-tags {
           display: flex;
           flex-wrap: wrap;
           gap: 0.5rem;
+        }
+        
+        .event-type-tag,
+        .tag-item {
+          background: var(--background-secondary);
+          color: var(--text-primary);
+          padding: 0.3rem 0.7rem;
+          border-radius: var(--radius-sm);
+          font-size: 0.8rem;
+          border: 1px solid var(--border-primary);
+          text-transform: capitalize;
         }
         
         .profile-header {
@@ -629,6 +584,16 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
           flex: 1;
         }
         
+        .profile-type-tag {
+          background: var(--accent-secondary);
+          color: white;
+          padding: 0.3rem 0.7rem;
+          border-radius: var(--radius-sm);
+          font-size: 0.8rem;
+          text-transform: capitalize;
+          flex-shrink: 0;
+        }
+        
         .profile-title {
           color: var(--text-secondary);
           font-weight: 500;
@@ -636,40 +601,53 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
           font-size: 0.95rem;
         }
         
-        .sources {
+        .sources-section {
           background: var(--background-tertiary);
-          padding: 1.5rem;
+          padding: 2.5rem;
           border-radius: var(--radius-lg);
           margin-bottom: 2rem;
         }
         
-        .sources h2 {
-          margin-bottom: 1rem;
+        .sources-section h2 {
+          margin-bottom: 2rem;
           color: var(--text-primary);
         }
         
-        .sources-list {
-          list-style: none;
-          padding: 0;
+        .sources-container {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
         }
         
-        .sources-list li {
-          padding: 0.5rem 0;
-          border-bottom: 1px solid var(--border-primary);
+        .source-item {
+          padding: 1rem;
+          background: var(--background-primary);
+          border-radius: var(--radius-md);
           color: var(--text-secondary);
-        }
-        
-        .sources-list li:last-child {
-          border-bottom: none;
+          border-left: 4px solid var(--accent-primary);
         }
         
         .error-page {
           text-align: center;
-          padding: 3rem;
+          padding: 4rem 2rem;
+        }
+        
+        .error-page h1 {
+          margin-bottom: 1rem;
+          color: var(--text-primary);
+        }
+        
+        .error-page p {
+          margin-bottom: 2rem;
+          color: var(--text-secondary);
         }
         
         @media (max-width: 768px) {
-          .event-meta {
+          .event-article {
+            padding: 0 0.5rem;
+          }
+          
+          .header-navigation {
             flex-direction: column;
             gap: 1rem;
             align-items: flex-start;
@@ -679,28 +657,28 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
             font-size: 2rem;
           }
           
-          .details-grid {
-            grid-template-columns: 1fr;
-          }
-          
-          .sub-event-card {
+          .detail-row {
             flex-direction: column;
+            gap: 0.5rem;
           }
           
-          .sub-event-marker {
-            margin-right: 0;
-            margin-bottom: 1rem;
+          .detail-row strong {
+            min-width: auto;
           }
           
           .related-events-grid,
-          .cases-grid,
-          .profiles-grid {
+          .linked-grid {
             grid-template-columns: 1fr;
           }
           
           .profile-header {
             flex-direction: column;
             align-items: flex-start;
+          }
+          
+          .event-details,
+          .sources-section {
+            padding: 1.5rem;
           }
         }
       `}</style>

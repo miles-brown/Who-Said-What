@@ -5,7 +5,7 @@ end_date: "2005-06-20"
 location: "Neverland Ranch and various media outlets"
 event_type: "media_response"
 status: "documented"
-significance: "medium"
+
 parent_event: "michael-jackson-2005-trial"
 summary: "Jackson's strategic media response following his acquittal, including public statements and controlled media appearances."
 excerpt: "Following his acquittal, Michael Jackson and his team orchestrated a careful media response to address the verdict and begin rebuilding his public image."

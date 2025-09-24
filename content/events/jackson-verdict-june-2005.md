@@ -4,7 +4,7 @@ event_date: "2005-06-13"
 location: "Santa Barbara County Superior Court, California"
 event_type: "legal_outcome"
 status: "documented"
-significance: "high"
+
 is_milestone: true
 parent_event: "michael-jackson-2005-trial"
 summary: "Jury delivers not guilty verdicts on all charges against Michael Jackson, ending the high-profile criminal trial."

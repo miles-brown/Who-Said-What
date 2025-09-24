@@ -4,7 +4,7 @@ event_date: "2022-10-30"
 location: "Twitter platform"
 event_type: "platform_action"
 status: "documented"
-significance: "medium"
+
 parent_event: "kanye-west-antisemitic-statements-2022"
 summary: "Twitter suspends Kanye West's account following antisemitic posts that violated platform policies on hate speech."
 excerpt: "Twitter took action against Kanye West's account after he posted antisemitic content, implementing a suspension that prevented him from posting further content on the platform."

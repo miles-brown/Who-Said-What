@@ -6,11 +6,10 @@ import Layout from '../../components/Layout'
 import { format } from 'date-fns'
 
 export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
-  const [viewMode, setViewMode] = useState('timeline') // timeline, hierarchy, grid
+  const [viewMode, setViewMode] = useState('grouped') // grouped, list
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedType, setSelectedType] = useState('all')
   const [selectedCategory, setSelectedCategory] = useState('all')
-  const [selectedSignificance, setSelectedSignificance] = useState('all')
 
   // Filter events based on search and filters
   const filteredEvents = allEvents.filter(event => {
@@ -21,140 +20,125 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
     const matchesType = selectedType === 'all' || event.event_type === selectedType
     const matchesCategory = selectedCategory === 'all' || 
                            (event.categories && event.categories.includes(selectedCategory))
-    const matchesSignificance = selectedSignificance === 'all' || event.significance === selectedSignificance
     
-    return matchesSearch && matchesType && matchesCategory && matchesSignificance
+    return matchesSearch && matchesType && matchesCategory
   })
 
   // Get unique values for filters
   const allTypes = [...new Set(allEvents.map(e => e.event_type))]
   const allCategories = [...new Set(allEvents.flatMap(e => e.categories || []))]
-  const allSignificance = [...new Set(allEvents.map(e => e.significance))]
 
-  const renderTimelineView = () => (
-    <div className="timeline-view">
-      <div className="timeline">
-        {filteredEvents.map((event, index) => (
-          <div key={event.slug} className={`timeline-item ${event.is_milestone ? 'milestone' : ''}`}>
-            <div className="timeline-marker">
-              <div className={`timeline-dot ${event.significance}`}></div>
-              {index < filteredEvents.length - 1 && <div className="timeline-line"></div>}
-            </div>
-            <div className="timeline-content">
-              <Link href={`/events/${event.slug}`}>
-                <div className="event-card timeline-card">
-                  <div className="event-header">
-                    <h3>{event.title}</h3>
-                    <div className="event-meta">
-                      <time className="event-date">
-                        {format(new Date(event.event_date), 'MMM d, yyyy')}
-                      </time>
-                      <span className={`significance-badge ${event.significance}`}>
-                        {event.significance}
-                      </span>
-                    </div>
+  // Group events by main events and their sub-events
+  const groupedEvents = () => {
+    const mainEvents = filteredEvents.filter(event => !event.parent_event)
+    return mainEvents.map(mainEvent => ({
+      ...mainEvent,
+      subEvents: filteredEvents.filter(event => event.parent_event === mainEvent.slug)
+    }))
+  }
+
+  const renderGroupedView = () => (
+    <div className="grouped-view">
+      {groupedEvents().map((mainEvent) => (
+        <div key={mainEvent.slug} className="event-group">
+          <div className="main-event">
+            <Link href={`/events/${mainEvent.slug}`}>
+              <div className="event-card main-event-card">
+                <div className="event-header">
+                  <h2>{mainEvent.title}</h2>
+                  <div className="event-meta">
+                    <time className="event-date">
+                      {format(new Date(mainEvent.event_date), 'MMMM d, yyyy')}
+                      {mainEvent.end_date && (
+                        <span> - {format(new Date(mainEvent.end_date), 'MMMM d, yyyy')}</span>
+                      )}
+                    </time>
+                    <span className="event-type">{mainEvent.event_type.replace('_', ' ')}</span>
                   </div>
-                  
-                  {event.location && (
-                    <p className="event-location">📍 {event.location}</p>
-                  )}
-                  
-                  <p className="event-excerpt">{event.excerpt}</p>
-                  
-                  <div className="event-footer">
-                    <span className={`event-type badge badge-${event.event_type === 'incident' ? 'danger' : 'primary'}`}>
-                      {event.event_type}
-                    </span>
-                    
-                    {event.sub_events && event.sub_events.length > 0 && (
-                      <span className="sub-events-count">
-                        {event.sub_events.length} sub-event{event.sub_events.length !== 1 ? 's' : ''}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </Link>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-
-  const renderHierarchyItem = (event, level = 0) => (
-    <div key={event.slug} className={`hierarchy-item level-${level}`}>
-      <Link href={`/events/${event.slug}`}>
-        <div className="event-card hierarchy-card">
-          <div className="event-header">
-            <h3>{event.title}</h3>
-            <time className="event-date">
-              {format(new Date(event.event_date), 'MMM d, yyyy')}
-            </time>
-          </div>
-          <p className="event-excerpt">{event.excerpt}</p>
-          <div className="event-meta">
-            <span className={`event-type badge badge-${event.event_type === 'incident' ? 'danger' : 'primary'}`}>
-              {event.event_type}
-            </span>
-            <span className={`significance-badge ${event.significance}`}>
-              {event.significance}
-            </span>
-          </div>
-        </div>
-      </Link>
-      
-      {event.children && event.children.length > 0 && (
-        <div className="sub-events">
-          {event.children.map(child => renderHierarchyItem(child, level + 1))}
-        </div>
-      )}
-    </div>
-  )
-
-  const renderHierarchyView = () => (
-    <div className="hierarchy-view">
-      {eventHierarchy
-        .filter(event => filteredEvents.some(fe => fe.slug === event.slug))
-        .map(event => renderHierarchyItem(event))}
-    </div>
-  )
-
-  const renderGridView = () => (
-    <div className="grid-view">
-      <div className="events-grid">
-        {filteredEvents.map((event) => (
-          <Link href={`/events/${event.slug}`} key={event.slug}>
-            <div className="event-card grid-card">
-              <div className="event-header">
-                <h3>{event.title}</h3>
-                <time className="event-date">
-                  {format(new Date(event.event_date), 'MMM d, yyyy')}
-                </time>
-              </div>
-              
-              {event.location && (
-                <p className="event-location">📍 {event.location}</p>
-              )}
-              
-              <p className="event-excerpt">{event.excerpt}</p>
-              
-              <div className="event-footer">
-                <div className="event-badges">
-                  <span className={`event-type badge badge-${event.event_type === 'incident' ? 'danger' : 'primary'}`}>
-                    {event.event_type}
-                  </span>
-                  <span className={`significance-badge ${event.significance}`}>
-                    {event.significance}
-                  </span>
                 </div>
                 
-                {event.categories && event.categories.length > 0 && (
+                {mainEvent.location && (
+                  <p className="event-location">📍 {mainEvent.location}</p>
+                )}
+                
+                <p className="event-summary">{mainEvent.summary || mainEvent.excerpt}</p>
+                
+                <div className="event-footer">
                   <div className="event-categories">
-                    {event.categories.slice(0, 2).map(category => (
-                      <span key={category} className="badge">{category}</span>
+                    {mainEvent.categories && mainEvent.categories.map(category => (
+                      <span key={category} className="category-tag">{category}</span>
                     ))}
                   </div>
+                  
+                  {mainEvent.subEvents && mainEvent.subEvents.length > 0 && (
+                    <span className="sub-events-indicator">
+                      {mainEvent.subEvents.length} related event{mainEvent.subEvents.length !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </Link>
+            
+            {/* Sub-events */}
+            {mainEvent.subEvents && mainEvent.subEvents.length > 0 && (
+              <div className="sub-events-container">
+                <h3>Related Events</h3>
+                <div className="sub-events-grid">
+                  {mainEvent.subEvents.map((subEvent) => (
+                    <Link href={`/events/${subEvent.slug}`} key={subEvent.slug}>
+                      <div className="event-card sub-event-card">
+                        <h4>{subEvent.title}</h4>
+                        <time className="sub-event-date">
+                          {format(new Date(subEvent.event_date), 'MMM d, yyyy')}
+                        </time>
+                        <p className="sub-event-excerpt">{subEvent.excerpt}</p>
+                        <span className="sub-event-type">{subEvent.event_type.replace('_', ' ')}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+
+  const renderListView = () => (
+    <div className="list-view">
+      <div className="events-list">
+        {filteredEvents.map((event) => (
+          <Link href={`/events/${event.slug}`} key={event.slug}>
+            <div className="event-card list-event-card">
+              <div className="event-content">
+                <div className="event-header">
+                  <h3>{event.title}</h3>
+                  <div className="event-meta">
+                    <time className="event-date">
+                      {format(new Date(event.event_date), 'MMM d, yyyy')}
+                    </time>
+                    <span className="event-type">{event.event_type.replace('_', ' ')}</span>
+                  </div>
+                </div>
+                
+                {event.location && (
+                  <p className="event-location">📍 {event.location}</p>
                 )}
+                
+                <p className="event-excerpt">{event.excerpt}</p>
+                
+                <div className="event-footer">
+                  <div className="event-categories">
+                    {event.categories && event.categories.slice(0, 3).map(category => (
+                      <span key={category} className="category-tag">{category}</span>
+                    ))}
+                  </div>
+                  
+                  {event.parent_event && (
+                    <span className="parent-indicator">Part of larger event</span>
+                  )}
+                </div>
               </div>
             </div>
           </Link>
@@ -166,104 +150,97 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
   return (
     <Layout 
       title="Events - Who Said What"
-      description="Timeline of documented events, incidents, and their relationships in our case studies"
+      description="Documented events and incidents organized by relationship and context"
     >
       <Head>
         <title>Events - Who Said What</title>
-        <meta name="description" content="Timeline of documented events, incidents, and their relationships in our case studies" />
+        <meta name="description" content="Documented events and incidents organized by relationship and context" />
       </Head>
 
       <div className="events-header">
-        <h1>Events Timeline</h1>
+        <h1>Events Documentation</h1>
         <p className="subtitle">
-          Chronological documentation of incidents, responses, and related events
+          Comprehensive documentation of incidents and related events
         </p>
         <p className="description">
-          This timeline provides a comprehensive view of documented events and their relationships. 
-          Events can contain sub-events and are linked to related incidents, providing context 
-          for understanding complex situations and their development over time.
+          Events are organized by their relationships and context. Main events contain related 
+          sub-events that provide detailed documentation of complex incidents and their development.
         </p>
       </div>
 
       {/* Statistics Overview */}
       <div className="stats-overview">
-        <div className="stat-card">
-          <h3>{eventStats.total}</h3>
-          <p>Total Events</p>
+        <div className="stat-item">
+          <span className="stat-number">{eventStats.total}</span>
+          <span className="stat-label">Total Events</span>
         </div>
-        <div className="stat-card">
-          <h3>{eventStats.milestones}</h3>
-          <p>Milestones</p>
+        <div className="stat-item">
+          <span className="stat-number">{eventStats.withSubEvents}</span>
+          <span className="stat-label">Main Events</span>
         </div>
-        <div className="stat-card">
-          <h3>{eventStats.withSubEvents}</h3>
-          <p>With Sub-Events</p>
-        </div>
-        <div className="stat-card">
-          <h3>{Object.keys(eventStats.byType).length}</h3>
-          <p>Event Types</p>
+        <div className="stat-item">
+          <span className="stat-number">{Object.keys(eventStats.byType).length}</span>
+          <span className="stat-label">Event Types</span>
         </div>
       </div>
 
       {/* View Mode Selector */}
       <div className="view-controls">
-        <div className="view-mode-selector">
+        <div className="view-selector">
           <button 
-            className={`view-btn ${viewMode === 'timeline' ? 'active' : ''}`}
-            onClick={() => setViewMode('timeline')}
+            className={`view-button ${viewMode === 'grouped' ? 'active' : ''}`}
+            onClick={() => setViewMode('grouped')}
           >
-            📅 Timeline
+            Grouped View
           </button>
           <button 
-            className={`view-btn ${viewMode === 'hierarchy' ? 'active' : ''}`}
-            onClick={() => setViewMode('hierarchy')}
+            className={`view-button ${viewMode === 'list' ? 'active' : ''}`}
+            onClick={() => setViewMode('list')}
           >
-            🌳 Hierarchy
-          </button>
-          <button 
-            className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-            onClick={() => setViewMode('grid')}
-          >
-            ⊞ Grid
+            List View
           </button>
         </div>
       </div>
 
       {/* Search and Filter Section */}
       <div className="search-filters">
-        <div className="search-box">
-          <label htmlFor="search" className="sr-only">Search events</label>
+        <div className="search-container">
+          <label htmlFor="search" className="search-label">Search Events</label>
           <input
             id="search"
             type="text"
-            placeholder="Search events by title, location, or description..."
+            placeholder="Search by title, description, or location..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="search-input"
           />
         </div>
         
-        <div className="filters">
-          <div className="filter-group">
+        <div className="filters-container">
+          <div className="filter-item">
             <label htmlFor="type-filter">Type:</label>
             <select
               id="type-filter"
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
+              className="filter-select"
             >
               <option value="all">All Types</option>
               {allTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
+                <option key={type} value={type}>
+                  {type.replace('_', ' ')}
+                </option>
               ))}
             </select>
           </div>
           
-          <div className="filter-group">
+          <div className="filter-item">
             <label htmlFor="category-filter">Category:</label>
             <select
               id="category-filter"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
+              className="filter-select"
             >
               <option value="all">All Categories</option>
               {allCategories.map(category => (
@@ -271,25 +248,11 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
               ))}
             </select>
           </div>
-          
-          <div className="filter-group">
-            <label htmlFor="significance-filter">Significance:</label>
-            <select
-              id="significance-filter"
-              value={selectedSignificance}
-              onChange={(e) => setSelectedSignificance(e.target.value)}
-            >
-              <option value="all">All Levels</option>
-              {allSignificance.map(sig => (
-                <option key={sig} value={sig}>{sig}</option>
-              ))}
-            </select>
-          </div>
         </div>
       </div>
 
       {/* Results Summary */}
-      <div className="results-summary">
+      <div className="results-info">
         <p>
           Showing {filteredEvents.length} of {allEvents.length} events
           {searchTerm && ` matching "${searchTerm}"`}
@@ -300,14 +263,13 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
       <div className="events-content">
         {filteredEvents.length > 0 ? (
           <>
-            {viewMode === 'timeline' && renderTimelineView()}
-            {viewMode === 'hierarchy' && renderHierarchyView()}
-            {viewMode === 'grid' && renderGridView()}
+            {viewMode === 'grouped' && renderGroupedView()}
+            {viewMode === 'list' && renderListView()}
           </>
         ) : (
           <div className="no-results">
             <h3>No events found</h3>
-            <p>Try adjusting your search terms or filters.</p>
+            <p>Try adjusting your search terms or filters to find relevant events.</p>
           </div>
         )}
       </div>
@@ -330,40 +292,41 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
           font-size: 1.2rem;
           color: var(--text-secondary);
           margin-bottom: 1rem;
+          font-weight: 500;
         }
         
         .description {
-          max-width: 800px;
+          max-width: 700px;
           margin: 0 auto;
           color: var(--text-muted);
           line-height: 1.6;
         }
         
         .stats-overview {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-          gap: 1rem;
+          display: flex;
+          justify-content: center;
+          gap: 3rem;
           margin-bottom: 2rem;
-        }
-        
-        .stat-card {
-          background: var(--background-primary);
           padding: 1.5rem;
+          background: var(--background-primary);
           border-radius: var(--radius-lg);
+        }
+        
+        .stat-item {
           text-align: center;
-          border: 1px solid var(--border-secondary);
         }
         
-        .stat-card h3 {
+        .stat-number {
+          display: block;
           font-size: 2rem;
-          margin-bottom: 0.5rem;
+          font-weight: 700;
           color: var(--accent-primary);
+          margin-bottom: 0.25rem;
         }
         
-        .stat-card p {
+        .stat-label {
           color: var(--text-secondary);
           font-size: 0.9rem;
-          margin: 0;
         }
         
         .view-controls {
@@ -371,7 +334,7 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
           text-align: center;
         }
         
-        .view-mode-selector {
+        .view-selector {
           display: inline-flex;
           background: var(--background-primary);
           border-radius: var(--radius-md);
@@ -379,169 +342,128 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
           overflow: hidden;
         }
         
-        .view-btn {
-          padding: 0.75rem 1.5rem;
+        .view-button {
+          padding: 0.75rem 2rem;
           border: none;
           background: transparent;
           cursor: pointer;
           transition: var(--transition);
-          font-size: 0.9rem;
+          font-size: 0.95rem;
           color: var(--text-secondary);
+          font-weight: 500;
         }
         
-        .view-btn:hover {
+        .view-button:hover {
           background: var(--background-secondary);
         }
         
-        .view-btn.active {
+        .view-button.active {
           background: var(--accent-primary);
           color: white;
         }
         
         .search-filters {
           background: var(--background-primary);
-          padding: 1.5rem;
+          padding: 2rem;
           border-radius: var(--radius-lg);
           margin-bottom: 2rem;
           box-shadow: var(--shadow-sm);
+        }
+        
+        .search-container {
+          margin-bottom: 1.5rem;
+        }
+        
+        .search-label {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 600;
+          color: var(--text-primary);
         }
         
         .search-input {
           width: 100%;
-          padding: 0.75rem;
+          padding: 0.75rem 1rem;
           border: 2px solid var(--border-primary);
           border-radius: var(--radius-md);
           font-size: 1rem;
-          margin-bottom: 1rem;
+          background: var(--background-secondary);
+          transition: var(--transition);
         }
         
-        .filters {
+        .search-input:focus {
+          outline: none;
+          border-color: var(--accent-primary);
+        }
+        
+        .filters-container {
           display: flex;
-          gap: 1rem;
+          gap: 2rem;
           flex-wrap: wrap;
         }
         
-        .filter-group {
+        .filter-item {
           display: flex;
           flex-direction: column;
           gap: 0.5rem;
-          min-width: 150px;
+          min-width: 180px;
         }
         
-        .filter-group label {
-          font-weight: 500;
+        .filter-item label {
+          font-weight: 600;
           color: var(--text-primary);
         }
         
-        .filter-group select {
-          padding: 0.5rem;
+        .filter-select {
+          padding: 0.6rem;
           border: 2px solid var(--border-primary);
           border-radius: var(--radius-sm);
-          background: var(--background-primary);
+          background: var(--background-secondary);
+          font-size: 0.95rem;
         }
         
-        .results-summary {
-          margin-bottom: 1.5rem;
+        .results-info {
+          margin-bottom: 2rem;
           color: var(--text-secondary);
           font-weight: 500;
         }
         
-        /* Timeline View Styles */
-        .timeline {
-          position: relative;
-          max-width: 800px;
-          margin: 0 auto;
+        /* Grouped View Styles */
+        .event-group {
+          margin-bottom: 3rem;
+          border: 1px solid var(--border-secondary);
+          border-radius: var(--radius-lg);
+          overflow: hidden;
+          background: var(--background-primary);
         }
         
-        .timeline-item {
-          display: flex;
-          margin-bottom: 2rem;
-          position: relative;
+        .main-event-card {
+          background: var(--background-secondary);
+          border-bottom: 2px solid var(--border-primary);
         }
         
-        .timeline-marker {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          margin-right: 2rem;
-          position: relative;
+        .sub-events-container {
+          padding: 2rem;
         }
         
-        .timeline-dot {
-          width: 16px;
-          height: 16px;
-          border-radius: 50%;
-          border: 3px solid var(--background-primary);
-          z-index: 2;
+        .sub-events-container h3 {
+          margin-bottom: 1.5rem;
+          color: var(--text-primary);
+          font-size: 1.25rem;
         }
         
-        .timeline-dot.low { background: var(--accent-success); }
-        .timeline-dot.medium { background: var(--accent-warning); }
-        .timeline-dot.high { background: var(--accent-danger); }
-        
-        .milestone .timeline-dot {
-          width: 20px;
-          height: 20px;
-          border-width: 4px;
-        }
-        
-        .timeline-line {
-          width: 2px;
-          height: 60px;
-          background: var(--border-primary);
-          margin-top: 0.5rem;
-        }
-        
-        .timeline-content {
-          flex: 1;
-        }
-        
-        .timeline-card {
-          margin-bottom: 0;
-        }
-        
-        /* Hierarchy View Styles */
-        .hierarchy-item {
-          margin-bottom: 1rem;
-        }
-        
-        .hierarchy-item.level-0 {
-          border-left: 4px solid var(--accent-primary);
-          padding-left: 1rem;
-        }
-        
-        .hierarchy-item.level-1 {
-          border-left: 3px solid var(--accent-secondary);
-          padding-left: 1.5rem;
-          margin-left: 1rem;
-        }
-        
-        .hierarchy-item.level-2 {
-          border-left: 2px solid var(--text-muted);
-          padding-left: 2rem;
-          margin-left: 2rem;
-        }
-        
-        .sub-events {
-          margin-top: 1rem;
-        }
-        
-        /* Grid View Styles */
-        .events-grid {
+        .sub-events-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-          gap: 1.5rem;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 1rem;
         }
         
         /* Event Card Styles */
         .event-card {
-          background: var(--background-primary);
-          border: 1px solid var(--border-secondary);
-          border-radius: var(--radius-lg);
-          padding: 1.5rem;
+          padding: 2rem;
           cursor: pointer;
           transition: var(--transition);
-          box-shadow: var(--shadow-sm);
+          border-radius: var(--radius-md);
         }
         
         .event-card:hover {
@@ -549,43 +471,82 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
           box-shadow: var(--shadow-md);
         }
         
-        .event-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
+        .list-event-card {
+          background: var(--background-primary);
+          border: 1px solid var(--border-secondary);
           margin-bottom: 1rem;
-          gap: 1rem;
         }
         
-        .event-card h3 {
-          margin: 0;
+        .sub-event-card {
+          background: var(--background-primary);
+          border: 1px solid var(--border-secondary);
+          padding: 1.5rem;
+        }
+        
+        .event-header {
+          margin-bottom: 1rem;
+        }
+        
+        .event-header h2 {
+          margin-bottom: 0.5rem;
           color: var(--text-primary);
-          flex: 1;
+          font-size: 1.5rem;
+        }
+        
+        .event-header h3 {
+          margin-bottom: 0.5rem;
+          color: var(--text-primary);
+          font-size: 1.25rem;
+        }
+        
+        .sub-event-card h4 {
+          margin-bottom: 0.5rem;
+          color: var(--text-primary);
+          font-size: 1.1rem;
         }
         
         .event-meta {
           display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-          gap: 0.5rem;
+          gap: 1rem;
+          align-items: center;
+          flex-wrap: wrap;
         }
         
         .event-date {
           color: var(--text-muted);
+          font-size: 0.95rem;
+        }
+        
+        .sub-event-date {
+          color: var(--text-muted);
           font-size: 0.9rem;
-          white-space: nowrap;
+          display: block;
+          margin-bottom: 0.75rem;
+        }
+        
+        .event-type,
+        .sub-event-type {
+          background: var(--accent-primary);
+          color: white;
+          padding: 0.25rem 0.75rem;
+          border-radius: var(--radius-sm);
+          font-size: 0.85rem;
+          font-weight: 500;
+          text-transform: capitalize;
         }
         
         .event-location {
           color: var(--text-secondary);
-          font-size: 0.9rem;
-          margin-bottom: 0.5rem;
+          font-size: 0.95rem;
+          margin-bottom: 1rem;
         }
         
-        .event-excerpt {
+        .event-summary,
+        .event-excerpt,
+        .sub-event-excerpt {
           color: var(--text-secondary);
-          line-height: 1.5;
-          margin-bottom: 1rem;
+          line-height: 1.6;
+          margin-bottom: 1.5rem;
         }
         
         .event-footer {
@@ -596,79 +557,74 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
           gap: 1rem;
         }
         
-        .event-badges {
-          display: flex;
-          gap: 0.5rem;
-          flex-wrap: wrap;
-        }
-        
         .event-categories {
           display: flex;
           gap: 0.5rem;
           flex-wrap: wrap;
         }
         
-        .significance-badge {
+        .category-tag {
+          background: var(--background-tertiary);
+          color: var(--text-primary);
           padding: 0.25rem 0.6rem;
           border-radius: var(--radius-sm);
           font-size: 0.8rem;
-          font-weight: 500;
-          text-transform: capitalize;
+          border: 1px solid var(--border-primary);
         }
         
-        .significance-badge.low {
-          background: var(--accent-success);
-          color: white;
-        }
-        
-        .significance-badge.medium {
-          background: var(--accent-warning);
-          color: white;
-        }
-        
-        .significance-badge.high {
-          background: var(--accent-danger);
-          color: white;
-        }
-        
-        .sub-events-count {
+        .sub-events-indicator,
+        .parent-indicator {
           color: var(--text-muted);
-          font-size: 0.8rem;
+          font-size: 0.85rem;
+          font-style: italic;
         }
         
         .no-results {
           text-align: center;
-          padding: 3rem;
+          padding: 4rem 2rem;
           color: var(--text-muted);
         }
         
+        .no-results h3 {
+          margin-bottom: 1rem;
+          color: var(--text-secondary);
+        }
+        
         @media (max-width: 768px) {
-          .events-grid {
+          .stats-overview {
+            flex-direction: column;
+            gap: 1.5rem;
+          }
+          
+          .filters-container {
+            flex-direction: column;
+            gap: 1rem;
+          }
+          
+          .filter-item {
+            min-width: auto;
+          }
+          
+          .sub-events-grid {
             grid-template-columns: 1fr;
           }
           
-          .timeline-marker {
-            margin-right: 1rem;
-          }
-          
-          .event-header {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-          
           .event-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+          }
+          
+          .event-footer {
+            flex-direction: column;
             align-items: flex-start;
           }
           
-          .filters {
-            flex-direction: column;
-          }
-          
-          .view-mode-selector {
+          .view-selector {
             width: 100%;
           }
           
-          .view-btn {
+          .view-button {
             flex: 1;
           }
         }
