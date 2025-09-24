@@ -17,10 +17,8 @@ participants:
   - "Judge Rodney Melville"
   - "District Attorney Tom Sneddon"
   - "Defense Attorney Thomas Mesereau"
-sub_events:
-  - "jackson-phone-call-february-2005"
-  - "jackson-verdict-june-2005"
-  - "jackson-media-response-2005"
+child_events:
+  - "michael-jackson-phone-leak-2005"
 related_events: []
 linked_cases: 
   - "michael-jackson-2005"

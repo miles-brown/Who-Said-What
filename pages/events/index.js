@@ -1,12 +1,12 @@
 import Head from 'next/head'
 import Link from 'next/link'
 import { useState } from 'react'
-import { getAllEvents, getEventHierarchy, getEventStatistics } from '../../lib/events'
+import { getAllEvents, getMainEvents, getEventHierarchy, getEventStatistics } from '../../lib/events'
 import Layout from '../../components/Layout'
 import { format } from 'date-fns'
 
-export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
-  const [viewMode, setViewMode] = useState('grouped') // grouped, list
+export default function EventsIndex({ allEvents, mainEvents, eventHierarchies, eventStats }) {
+  const [viewMode, setViewMode] = useState('hierarchy') // hierarchy, list
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedType, setSelectedType] = useState('all')
   const [selectedCategory, setSelectedCategory] = useState('all')
@@ -24,82 +24,95 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
     return matchesSearch && matchesType && matchesCategory
   })
 
+  // Filter hierarchies based on search and filters
+  const filteredHierarchies = eventHierarchies.filter(hierarchy => {
+    const parentMatches = hierarchy.parent.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         hierarchy.parent.summary.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const childrenMatch = hierarchy.children.some(child => 
+      child.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      child.summary.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    
+    const typeMatches = selectedType === 'all' || 
+                       hierarchy.parent.event_type === selectedType ||
+                       hierarchy.children.some(child => child.event_type === selectedType)
+    
+    const categoryMatches = selectedCategory === 'all' ||
+                           (hierarchy.parent.categories && hierarchy.parent.categories.includes(selectedCategory)) ||
+                           hierarchy.children.some(child => child.categories && child.categories.includes(selectedCategory))
+    
+    return (parentMatches || childrenMatch) && typeMatches && categoryMatches
+  })
+
   // Get unique values for filters
   const allTypes = [...new Set(allEvents.map(e => e.event_type))]
   const allCategories = [...new Set(allEvents.flatMap(e => e.categories || []))]
 
-  // Group events by main events and their sub-events
-  const groupedEvents = () => {
-    const mainEvents = filteredEvents.filter(event => !event.parent_event)
-    return mainEvents.map(mainEvent => ({
-      ...mainEvent,
-      subEvents: filteredEvents.filter(event => event.parent_event === mainEvent.slug)
-    }))
-  }
-
-  const renderGroupedView = () => (
-    <div className="grouped-view">
-      {groupedEvents().map((mainEvent) => (
-        <div key={mainEvent.slug} className="event-group">
-          <div className="main-event">
-            <Link href={`/events/${mainEvent.slug}`}>
-              <div className="event-card main-event-card">
+  const renderHierarchyView = () => (
+    <div className="hierarchy-view">
+      {filteredHierarchies.map((hierarchy) => (
+        <div key={hierarchy.parent.slug} className="event-hierarchy">
+          {/* Parent Event */}
+          <div className="parent-event">
+            <Link href={`/events/${hierarchy.parent.slug}`}>
+              <div className="event-card parent-event-card">
                 <div className="event-header">
-                  <h2>{mainEvent.title}</h2>
+                  <h2>{hierarchy.parent.title}</h2>
                   <div className="event-meta">
                     <time className="event-date">
-                      {format(new Date(mainEvent.event_date), 'MMMM d, yyyy')}
-                      {mainEvent.end_date && (
-                        <span> - {format(new Date(mainEvent.end_date), 'MMMM d, yyyy')}</span>
+                      {format(new Date(hierarchy.parent.event_date), 'MMMM d, yyyy')}
+                      {hierarchy.parent.end_date && (
+                        <span> - {format(new Date(hierarchy.parent.end_date), 'MMMM d, yyyy')}</span>
                       )}
                     </time>
-                    <span className="event-type">{mainEvent.event_type.replace('_', ' ')}</span>
+                    <span className="event-type">{hierarchy.parent.event_type.replace('_', ' ')}</span>
                   </div>
                 </div>
                 
-                {mainEvent.location && (
-                  <p className="event-location">📍 {mainEvent.location}</p>
+                {hierarchy.parent.location && (
+                  <p className="event-location">📍 {hierarchy.parent.location}</p>
                 )}
                 
-                <p className="event-summary">{mainEvent.summary || mainEvent.excerpt}</p>
+                <p className="event-summary">{hierarchy.parent.summary || hierarchy.parent.excerpt}</p>
                 
                 <div className="event-footer">
                   <div className="event-categories">
-                    {mainEvent.categories && mainEvent.categories.map(category => (
+                    {hierarchy.parent.categories && hierarchy.parent.categories.map(category => (
                       <span key={category} className="category-tag">{category}</span>
                     ))}
                   </div>
                   
-                  {mainEvent.subEvents && mainEvent.subEvents.length > 0 && (
-                    <span className="sub-events-indicator">
-                      {mainEvent.subEvents.length} related event{mainEvent.subEvents.length !== 1 ? 's' : ''}
+                  {hierarchy.children.length > 0 && (
+                    <span className="child-events-indicator">
+                      {hierarchy.children.length} related event{hierarchy.children.length !== 1 ? 's' : ''}
                     </span>
                   )}
                 </div>
               </div>
             </Link>
-            
-            {/* Sub-events */}
-            {mainEvent.subEvents && mainEvent.subEvents.length > 0 && (
-              <div className="sub-events-container">
-                <h3>Related Events</h3>
-                <div className="sub-events-grid">
-                  {mainEvent.subEvents.map((subEvent) => (
-                    <Link href={`/events/${subEvent.slug}`} key={subEvent.slug}>
-                      <div className="event-card sub-event-card">
-                        <h4>{subEvent.title}</h4>
-                        <time className="sub-event-date">
-                          {format(new Date(subEvent.event_date), 'MMM d, yyyy')}
-                        </time>
-                        <p className="sub-event-excerpt">{subEvent.excerpt}</p>
-                        <span className="sub-event-type">{subEvent.event_type.replace('_', ' ')}</span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
+          
+          {/* Child Events */}
+          {hierarchy.children.length > 0 && (
+            <div className="child-events-container">
+              <h3>Related Events</h3>
+              <div className="child-events-grid">
+                {hierarchy.children.map((childEvent) => (
+                  <Link href={`/events/${childEvent.slug}`} key={childEvent.slug}>
+                    <div className="event-card child-event-card">
+                      <h4>{childEvent.title}</h4>
+                      <time className="child-event-date">
+                        {format(new Date(childEvent.event_date), 'MMM d, yyyy')}
+                      </time>
+                      <p className="child-event-excerpt">{childEvent.excerpt}</p>
+                      <span className="child-event-type">{childEvent.event_type.replace('_', ' ')}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -138,6 +151,10 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
                   {event.parent_event && (
                     <span className="parent-indicator">Part of larger event</span>
                   )}
+                  
+                  {event.child_events && event.child_events.length > 0 && (
+                    <span className="child-indicator">Has {event.child_events.length} related events</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -163,8 +180,8 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
           Comprehensive documentation of incidents and related events
         </p>
         <p className="description">
-          Events are organized by their relationships and context. Main events contain related 
-          sub-events that provide detailed documentation of complex incidents and their development.
+          Events are organized hierarchically, with main events containing related sub-events. 
+          Each main event includes an embedded timeline showing how the incident unfolded.
         </p>
       </div>
 
@@ -175,12 +192,16 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
           <span className="stat-label">Total Events</span>
         </div>
         <div className="stat-item">
-          <span className="stat-number">{eventStats.withSubEvents}</span>
+          <span className="stat-number">{eventStats.mainEvents}</span>
           <span className="stat-label">Main Events</span>
         </div>
         <div className="stat-item">
-          <span className="stat-number">{Object.keys(eventStats.byType).length}</span>
-          <span className="stat-label">Event Types</span>
+          <span className="stat-number">{eventStats.childEvents}</span>
+          <span className="stat-label">Related Events</span>
+        </div>
+        <div className="stat-item">
+          <span className="stat-number">{eventStats.withSubEvents}</span>
+          <span className="stat-label">With Timelines</span>
         </div>
       </div>
 
@@ -188,10 +209,10 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
       <div className="view-controls">
         <div className="view-selector">
           <button 
-            className={`view-button ${viewMode === 'grouped' ? 'active' : ''}`}
-            onClick={() => setViewMode('grouped')}
+            className={`view-button ${viewMode === 'hierarchy' ? 'active' : ''}`}
+            onClick={() => setViewMode('hierarchy')}
           >
-            Grouped View
+            Hierarchy View
           </button>
           <button 
             className={`view-button ${viewMode === 'list' ? 'active' : ''}`}
@@ -254,16 +275,20 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
       {/* Results Summary */}
       <div className="results-info">
         <p>
-          Showing {filteredEvents.length} of {allEvents.length} events
+          {viewMode === 'hierarchy' ? (
+            <>Showing {filteredHierarchies.length} event hierarchies</>
+          ) : (
+            <>Showing {filteredEvents.length} of {allEvents.length} events</>
+          )}
           {searchTerm && ` matching "${searchTerm}"`}
         </p>
       </div>
 
       {/* Events Display */}
       <div className="events-content">
-        {filteredEvents.length > 0 ? (
+        {(viewMode === 'hierarchy' ? filteredHierarchies.length > 0 : filteredEvents.length > 0) ? (
           <>
-            {viewMode === 'grouped' && renderGroupedView()}
+            {viewMode === 'hierarchy' && renderHierarchyView()}
             {viewMode === 'list' && renderListView()}
           </>
         ) : (
@@ -423,13 +448,15 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
         }
         
         .results-info {
-          margin-bottom: 2rem;
+          margin-bottom
+
+: 2rem;
           color: var(--text-secondary);
           font-weight: 500;
         }
         
-        /* Grouped View Styles */
-        .event-group {
+        /* Hierarchy View Styles */
+        .event-hierarchy {
           margin-bottom: 3rem;
           border: 1px solid var(--border-secondary);
           border-radius: var(--radius-lg);
@@ -437,22 +464,22 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
           background: var(--background-primary);
         }
         
-        .main-event-card {
+        .parent-event-card {
           background: var(--background-secondary);
           border-bottom: 2px solid var(--border-primary);
         }
         
-        .sub-events-container {
+        .child-events-container {
           padding: 2rem;
         }
         
-        .sub-events-container h3 {
+        .child-events-container h3 {
           margin-bottom: 1.5rem;
           color: var(--text-primary);
           font-size: 1.25rem;
         }
         
-        .sub-events-grid {
+        .child-events-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
           gap: 1rem;
@@ -477,7 +504,7 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
           margin-bottom: 1rem;
         }
         
-        .sub-event-card {
+        .child-event-card {
           background: var(--background-primary);
           border: 1px solid var(--border-secondary);
           padding: 1.5rem;
@@ -499,7 +526,7 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
           font-size: 1.25rem;
         }
         
-        .sub-event-card h4 {
+        .child-event-card h4 {
           margin-bottom: 0.5rem;
           color: var(--text-primary);
           font-size: 1.1rem;
@@ -517,7 +544,7 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
           font-size: 0.95rem;
         }
         
-        .sub-event-date {
+        .child-event-date {
           color: var(--text-muted);
           font-size: 0.9rem;
           display: block;
@@ -525,7 +552,7 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
         }
         
         .event-type,
-        .sub-event-type {
+        .child-event-type {
           background: var(--accent-primary);
           color: white;
           padding: 0.25rem 0.75rem;
@@ -543,7 +570,7 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
         
         .event-summary,
         .event-excerpt,
-        .sub-event-excerpt {
+        .child-event-excerpt {
           color: var(--text-secondary);
           line-height: 1.6;
           margin-bottom: 1.5rem;
@@ -572,8 +599,9 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
           border: 1px solid var(--border-primary);
         }
         
-        .sub-events-indicator,
-        .parent-indicator {
+        .child-events-indicator,
+        .parent-indicator,
+        .child-indicator {
           color: var(--text-muted);
           font-size: 0.85rem;
           font-style: italic;
@@ -605,7 +633,7 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
             min-width: auto;
           }
           
-          .sub-events-grid {
+          .child-events-grid {
             grid-template-columns: 1fr;
           }
           
@@ -635,13 +663,15 @@ export default function EventsIndex({ allEvents, eventHierarchy, eventStats }) {
 
 export async function getStaticProps() {
   const allEvents = getAllEvents()
-  const eventHierarchy = getEventHierarchy()
+  const mainEvents = getMainEvents()
+  const eventHierarchies = getEventHierarchy()
   const eventStats = getEventStatistics()
   
   return {
     props: {
       allEvents,
-      eventHierarchy,
+      mainEvents,
+      eventHierarchies,
       eventStats
     }
   }

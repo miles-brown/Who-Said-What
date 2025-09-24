@@ -15,7 +15,6 @@ sources:
   - "Anti-Defamation League Response, October 2022"
 linked_events:
   - "kanye-west-antisemitic-statements-2022"
-  - "kanye-twitter-suspension-2022"
 ---
 
 ## Background

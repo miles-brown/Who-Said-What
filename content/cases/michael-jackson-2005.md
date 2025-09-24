@@ -13,8 +13,7 @@ sources:
   - "Court Documents - People v. Jackson, 2005"
   - "Industry Response Documentation"
 linked_events:
-  - "michael-jackson-2005-trial"
-  - "jackson-phone-call-february-2005"
+  - "michael-jackson-phone-leak-2005"
 ---
 
 ## Background

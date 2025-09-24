@@ -1,6 +1,6 @@
 import Head from 'next/head'
 import Link from 'next/link'
-import { getAllEventSlugs, getEventBySlug, getSubEvents, getRelatedEvents } from '../../lib/events'
+import { getAllEventSlugs, getEventBySlug, getChildEvents, getParentEvent, getRelatedEvents, getEventBreadcrumbs } from '../../lib/events'
 import { getAllCases } from '../../lib/cases'
 import { getAllProfiles } from '../../lib/profiles'
 import Layout from '../../components/Layout'
@@ -8,7 +8,7 @@ import { remark } from 'remark'
 import html from 'remark-html'
 import { format, formatDistanceToNow } from 'date-fns'
 
-export default function EventPage({ event, subEvents, relatedEvents, linkedCases, linkedProfiles, contentHtml }) {
+export default function EventPage({ event, childEvents, parentEvent, relatedEvents, linkedCases, linkedProfiles, breadcrumbs, contentHtml }) {
   if (!event) {
     return (
       <Layout title="Event Not Found">
@@ -37,6 +37,53 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
     return `${Math.round(diffDays / 365)} years`
   }
 
+  const renderTimeline = () => {
+    if (!event.sub_events || event.sub_events.length === 0) return null
+
+    return (
+      <section className="timeline-section">
+        <h2>Event Timeline</h2>
+        <p className="timeline-description">
+          Detailed chronological breakdown of how this event unfolded:
+        </p>
+        
+        <div className="timeline-container">
+          {event.sub_events.map((subEvent, index) => (
+            <div key={index} className="timeline-item">
+              <div className="timeline-marker">
+                <div className="timeline-dot"></div>
+                {index < event.sub_events.length - 1 && <div className="timeline-line"></div>}
+              </div>
+              
+              <div className="timeline-content">
+                <div className="timeline-header">
+                  <h3>{subEvent.title}</h3>
+                  <div className="timeline-meta">
+                    <time className="timeline-date">
+                      {format(new Date(subEvent.date), 'MMMM d, yyyy')}
+                    </time>
+                    {subEvent.time && (
+                      <span className="timeline-time">{subEvent.time}</span>
+                    )}
+                    <span className="timeline-type">{subEvent.type.replace('_', ' ')}</span>
+                  </div>
+                </div>
+                
+                <p className="timeline-description">{subEvent.description}</p>
+                
+                {subEvent.details && (
+                  <div className="timeline-details">
+                    <p>{subEvent.details}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
   return (
     <Layout 
       title={`${event.title} - Who Said What`}
@@ -48,6 +95,26 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
       </Head>
 
       <article className="event-article">
+        {/* Breadcrumb Navigation */}
+        {breadcrumbs.length > 1 && (
+          <nav className="breadcrumb-nav" aria-label="Breadcrumb">
+            <ol className="breadcrumb-list">
+              <li className="breadcrumb-item">
+                <Link href="/events">Events</Link>
+              </li>
+              {breadcrumbs.map((crumb, index) => (
+                <li key={crumb.slug} className="breadcrumb-item">
+                  {index === breadcrumbs.length - 1 ? (
+                    <span className="breadcrumb-current">{crumb.title}</span>
+                  ) : (
+                    <Link href={`/events/${crumb.slug}`}>{crumb.title}</Link>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )}
+
         {/* Event Header */}
         <header className="event-header">
           <div className="header-navigation">
@@ -72,6 +139,17 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
             <p className="event-summary">{event.summary}</p>
           )}
         </header>
+
+        {/* Parent Event Context */}
+        {parentEvent && (
+          <section className="parent-event-section">
+            <h2>Part of: {parentEvent.title}</h2>
+            <p>This event occurred within the context of the larger {parentEvent.title.toLowerCase()}.</p>
+            <Link href={`/events/${parentEvent.slug}`} className="btn btn-outline">
+              View Parent Event
+            </Link>
+          </section>
+        )}
 
         {/* Event Details */}
         <section className="event-details">
@@ -149,17 +227,6 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
           </div>
         </section>
 
-        {/* Parent Event */}
-        {event.parent_event && (
-          <section className="parent-event-section">
-            <h2>Part of Larger Event</h2>
-            <p>This event is part of a larger incident or series of related events.</p>
-            <Link href={`/events/${event.parent_event}`} className="btn btn-outline">
-              View Main Event
-            </Link>
-          </section>
-        )}
-
         {/* Main Content */}
         <section className="event-content">
           <div 
@@ -168,26 +235,29 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
           />
         </section>
 
-        {/* Sub-Events */}
-        {subEvents.length > 0 && (
-          <section className="related-section">
+        {/* Embedded Timeline */}
+        {renderTimeline()}
+
+        {/* Child Events */}
+        {childEvents.length > 0 && (
+          <section className="child-events-section">
             <h2>Related Events</h2>
             <p className="section-description">
-              Events that occurred as part of or in response to this incident:
+              Events that occurred within the context of this incident:
             </p>
             
-            <div className="related-events-grid">
-              {subEvents.map((subEvent) => (
-                <Link href={`/events/${subEvent.slug}`} key={subEvent.slug}>
-                  <div className="related-event-card">
-                    <h3>{subEvent.title}</h3>
+            <div className="child-events-grid">
+              {childEvents.map((childEvent) => (
+                <Link href={`/events/${childEvent.slug}`} key={childEvent.slug}>
+                  <div className="child-event-card">
+                    <h3>{childEvent.title}</h3>
                     <time className="event-date">
-                      {format(new Date(subEvent.event_date), 'MMMM d, yyyy')}
+                      {format(new Date(childEvent.event_date), 'MMMM d, yyyy')}
                     </time>
-                    <p className="event-excerpt">{subEvent.excerpt}</p>
+                    <p className="event-excerpt">{childEvent.excerpt}</p>
                     <div className="event-meta">
                       <span className="event-type-tag">
-                        {subEvent.event_type.replace('_', ' ')}
+                        {childEvent.event_type.replace('_', ' ')}
                       </span>
                     </div>
                   </div>
@@ -245,7 +315,9 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
                     <p className="linked-excerpt">{caseStudy.excerpt}</p>
                     <div className="linked-tags">
                       {caseStudy.tags.slice(0, 3).map(tag => (
-                        <span key={tag} className="tag-item">{tag}</span>
+                        <span key={tag} className
+
+="tag-item">{tag}</span>
                       ))}
                     </div>
                   </div>
@@ -304,6 +376,47 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
           max-width: 900px;
           margin: 0 auto;
           padding: 0 1rem;
+        }
+        
+        .breadcrumb-nav {
+          margin-bottom: 2rem;
+          padding: 1rem 0;
+          border-bottom: 1px solid var(--border-secondary);
+        }
+        
+        .breadcrumb-list {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          list-style: none;
+          margin: 0;
+          padding: 0;
+        }
+        
+        .breadcrumb-item {
+          display: flex;
+          align-items: center;
+        }
+        
+        .breadcrumb-item:not(:last-child)::after {
+          content: '›';
+          margin-left: 0.5rem;
+          color: var(--text-muted);
+        }
+        
+        .breadcrumb-item a {
+          color: var(--accent-primary);
+          text-decoration: none;
+          font-weight: 500;
+        }
+        
+        .breadcrumb-item a:hover {
+          text-decoration: underline;
+        }
+        
+        .breadcrumb-current {
+          color: var(--text-secondary);
+          font-weight: 500;
         }
         
         .event-header {
@@ -374,6 +487,24 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
           line-height: 1.5;
         }
         
+        .parent-event-section {
+          background: var(--background-tertiary);
+          padding: 2rem;
+          border-radius: var(--radius-lg);
+          margin-bottom: 3rem;
+          text-align: center;
+        }
+        
+        .parent-event-section h2 {
+          margin-bottom: 1rem;
+          color: var(--text-primary);
+        }
+        
+        .parent-event-section p {
+          margin-bottom: 1.5rem;
+          color: var(--text-secondary);
+        }
+        
         .event-details {
           background: var(--background-primary);
           padding: 2.5rem;
@@ -435,24 +566,6 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
           border: 1px solid var(--border-primary);
         }
         
-        .parent-event-section {
-          background: var(--background-tertiary);
-          padding: 2rem;
-          border-radius: var(--radius-lg);
-          margin-bottom: 3rem;
-          text-align: center;
-        }
-        
-        .parent-event-section h2 {
-          margin-bottom: 1rem;
-          color: var(--text-primary);
-        }
-        
-        .parent-event-section p {
-          margin-bottom: 1.5rem;
-          color: var(--text-secondary);
-        }
-        
         .event-content {
           margin-bottom: 3rem;
         }
@@ -489,11 +602,137 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
           margin-bottom: 0.75rem;
         }
         
+        /* Timeline Styles */
+        .timeline-section {
+          background: var(--background-primary);
+          padding: 2.5rem;
+          border-radius: var(--radius-lg);
+          margin-bottom: 3rem;
+          box-shadow: var(--shadow-sm);
+        }
+        
+        .timeline-section h2 {
+          margin-bottom: 1rem;
+          color: var(--text-primary);
+          font-size: 1.5rem;
+        }
+        
+        .timeline-description {
+          color: var(--text-muted);
+          margin-bottom: 2rem;
+          line-height: 1.6;
+        }
+        
+        .timeline-container {
+          position: relative;
+        }
+        
+        .timeline-item {
+          display: flex;
+          gap: 1.5rem;
+          margin-bottom: 2rem;
+        }
+        
+        .timeline-item:last-child {
+          margin-bottom: 0;
+        }
+        
+        .timeline-marker {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          flex-shrink: 0;
+        }
+        
+        .timeline-dot {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: var(--accent-primary);
+          border: 3px solid var(--background-primary);
+          box-shadow: 0 0 0 3px var(--accent-primary);
+        }
+        
+        .timeline-line {
+          width: 2px;
+          height: 100%;
+          background: var(--border-primary);
+          margin-top: 0.5rem;
+          min-height: 2rem;
+        }
+        
+        .timeline-content {
+          flex: 1;
+          background: var(--background-secondary);
+          padding: 1.5rem;
+          border-radius: var(--radius-md);
+          border: 1px solid var(--border-secondary);
+        }
+        
+        .timeline-header {
+          margin-bottom: 1rem;
+        }
+        
+        .timeline-header h3 {
+          margin-bottom: 0.75rem;
+          color: var(--text-primary);
+          font-size: 1.1rem;
+        }
+        
+        .timeline-meta {
+          display: flex;
+          gap: 1rem;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+        
+        .timeline-date {
+          color: var(--text-muted);
+          font-size: 0.9rem;
+          font-weight: 500;
+        }
+        
+        .timeline-time {
+          color: var(--text-muted);
+          font-size: 0.85rem;
+        }
+        
+        .timeline-type {
+          background: var(--accent-secondary);
+          color: white;
+          padding: 0.2rem 0.6rem;
+          border-radius: var(--radius-sm);
+          font-size: 0.8rem;
+          text-transform: capitalize;
+        }
+        
+        .timeline-description {
+          color: var(--text-secondary);
+          line-height: 1.6;
+          margin-bottom: 0;
+        }
+        
+        .timeline-details {
+          margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid var(--border-primary);
+        }
+        
+        .timeline-details p {
+          color: var(--text-muted);
+          font-size: 0.95rem;
+          line-height: 1.5;
+          margin: 0;
+        }
+        
+        /* Section Styles */
+        .child-events-section,
         .related-section,
         .linked-section {
           margin-bottom: 3rem;
         }
         
+        .child-events-section h2,
         .related-section h2,
         .linked-section h2 {
           margin-bottom: 1rem;
@@ -507,6 +746,7 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
           line-height: 1.6;
         }
         
+        .child-events-grid,
         .related-events-grid,
         .linked-grid {
           display: grid;
@@ -514,6 +754,7 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
           gap: 1.5rem;
         }
         
+        .child-event-card,
         .related-event-card,
         .linked-card {
           background: var(--background-primary);
@@ -525,12 +766,14 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
           box-shadow: var(--shadow-sm);
         }
         
+        .child-event-card:hover,
         .related-event-card:hover,
         .linked-card:hover {
           transform: translateY(-3px);
           box-shadow: var(--shadow-md);
         }
         
+        .child-event-card h3,
         .related-event-card h3,
         .linked-card h3 {
           margin-bottom: 1rem;
@@ -666,6 +909,17 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
             min-width: auto;
           }
           
+          .timeline-item {
+            gap: 1rem;
+          }
+          
+          .timeline-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+          }
+          
+          .child-events-grid,
           .related-events-grid,
           .linked-grid {
             grid-template-columns: 1fr;
@@ -677,8 +931,13 @@ export default function EventPage({ event, subEvents, relatedEvents, linkedCases
           }
           
           .event-details,
+          .timeline-section,
           .sources-section {
             padding: 1.5rem;
+          }
+          
+          .breadcrumb-list {
+            flex-wrap: wrap;
           }
         }
       `}</style>
@@ -706,14 +965,22 @@ export async function getStaticProps({ params }) {
   // Process markdown content
   const processedContent = await remark()
     .use(html)
-    .process(event.content)
+    .process(event.
+
+content)
   const contentHtml = processedContent.toString()
 
-  // Get sub-events
-  const subEvents = getSubEvents(params.slug)
+  // Get child events
+  const childEvents = getChildEvents(params.slug)
+
+  // Get parent event
+  const parentEvent = getParentEvent(params.slug)
 
   // Get related events
   const relatedEvents = getRelatedEvents(params.slug)
+
+  // Get breadcrumbs
+  const breadcrumbs = getEventBreadcrumbs(params.slug)
 
   // Get linked cases
   const allCases = getAllCases()
@@ -731,10 +998,12 @@ export async function getStaticProps({ params }) {
   return {
     props: {
       event,
-      subEvents,
+      childEvents,
+      parentEvent,
       relatedEvents,
       linkedCases,
       linkedProfiles,
+      breadcrumbs,
       contentHtml
     }
   }
