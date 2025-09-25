@@ -101,7 +101,8 @@ export default function EventPage({ event, childEvents, parentEvent, relatedEven
       <section className="references-section">
         <h2>References and Sources</h2>
         <p className="references-description">
-          All factual claims in this documentation are supported by the following verified sources:
+          All factual claims in this documentation are supported by the following verified sources. 
+          Click the links to access the original articles and archived versions.
         </p>
         
         <div className="references-container">
@@ -118,15 +119,51 @@ export default function EventPage({ event, childEvents, parentEvent, relatedEven
                 </div>
               </div>
               
-              <h4 className="reference-title">{ref.title}</h4>
-              
-              <div className="reference-details">
-                <p className="reference-context">
-                  <strong>Context:</strong> {ref.context}
-                </p>
-                <p className="reference-type">
-                  <strong>Type:</strong> {ref.type.replace('_', ' ')}
-                </p>
+              <div className="reference-content">
+                <h4 className="reference-title">
+                  {ref.url ? (
+                    <a href={ref.url} target="_blank" rel="noopener noreferrer" className="reference-link">
+                      {ref.title}
+                    </a>
+                  ) : (
+                    ref.title
+                  )}
+                </h4>
+                
+                {ref.author && (
+                  <p className="reference-author">
+                    <strong>Author:</strong> {ref.author}
+                  </p>
+                )}
+                
+                <div className="reference-links">
+                  {ref.url && (
+                    <div className="link-item">
+                      <strong>Original:</strong>{' '}
+                      <a href={ref.url} target="_blank" rel="noopener noreferrer" className="source-link">
+                        {ref.url}
+                      </a>
+                    </div>
+                  )}
+                  
+                  {ref.archive_url && (
+                    <div className="link-item">
+                      <strong>Archived ({ref.archive_date}):</strong>{' '}
+                      <a href={ref.archive_url} target="_blank" rel="noopener noreferrer" className="archive-link">
+                        {ref.archive_url}
+                      </a>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="reference-details">
+                  <p className="reference-context">
+                    <strong>Context:</strong> {ref.context}
+                  </p>
+                  <p className="reference-type">
+                    <strong>Type:</strong> {ref.type.replace('_', ' ')}
+                  </p>
+                </div>
               </div>
             </div>
           ))}
@@ -910,11 +947,78 @@ export default function EventPage({ event, childEvents, parentEvent, relatedEven
           color: white;
         }
         
+        .reference-content {
+          flex: 1;
+        }
+        
         .reference-title {
           color: var(--text-primary);
           margin-bottom: 1rem;
           font-size: 1.1rem;
           font-weight: 600;
+        }
+        
+        .reference-link {
+          color: var(--accent-primary);
+          text-decoration: none;
+          transition: var(--transition);
+        }
+        
+        .reference-link:hover {
+          text-decoration: underline;
+          color: var(--accent-secondary);
+        }
+        
+        .reference-author {
+          color: var(--text-secondary);
+          margin-bottom: 1rem;
+          font-size: 0.95rem;
+        }
+        
+        .reference-links {
+          background: var(--background-tertiary);
+          padding: 1rem;
+          border-radius: var(--radius-sm);
+          margin-bottom: 1rem;
+          border-left: 3px solid var(--accent-primary);
+        }
+        
+        .link-item {
+          margin-bottom: 0.75rem;
+          font-size: 0.9rem;
+        }
+        
+        .link-item:last-child {
+          margin-bottom: 0;
+        }
+        
+        .source-link,
+        .archive-link {
+          color: var(--accent-primary);
+          text-decoration: none;
+          word-break: break-all;
+          font-family: monospace;
+          font-size: 0.85rem;
+          padding: 0.2rem 0.4rem;
+          background: var(--background-primary);
+          border-radius: 3px;
+          border: 1px solid var(--border-primary);
+          transition: var(--transition);
+        }
+        
+        .source-link:hover,
+        .archive-link:hover {
+          background: var(--accent-primary);
+          color: white;
+          text-decoration: none;
+        }
+        
+        .archive-link {
+          color: var(--accent-secondary);
+        }
+        
+        .archive-link:hover {
+          background: var(--accent-secondary);
         }
         
         .reference-details {
