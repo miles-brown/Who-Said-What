@@ -167,21 +167,22 @@ export default function EventsIndex({ allEvents, mainEvents, eventHierarchies, e
   return (
     <Layout 
       title="Events - Who Said What"
-      description="Documented events and incidents organized by relationship and context"
+      description="Browse documented events involving statements about Jews, Israel, and antisemitism with detailed timelines and academic citations"
     >
       <Head>
         <title>Events - Who Said What</title>
-        <meta name="description" content="Documented events and incidents organized by relationship and context" />
+        <meta name="description" content="Documented events involving statements about Jews, Israel, and antisemitism with academic citations and detailed timelines" />
       </Head>
 
       <div className="events-header">
         <h1>Events Documentation</h1>
         <p className="subtitle">
-          Comprehensive documentation of incidents and related events
+          Incidents involving statements about Jews, Israel, and antisemitism
         </p>
         <p className="description">
-          Events are organized hierarchically, with main events containing related sub-events. 
-          Each main event includes an embedded timeline showing how the incident unfolded.
+          Comprehensive documentation of public statements, scandals, and controversies by notable figures 
+          related to Jewish topics. Each event includes academic-quality citations, detailed timelines, 
+          and documentation of consequences and responses.
         </p>
       </div>
 

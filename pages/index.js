@@ -14,8 +14,8 @@ export default function Home({ allCases, allProfiles, allEvents }) {
   return (
     <Layout>
       <Head>
-        <title>Who Said What - Documentation of Public Statements</title>
-        <meta name="description" content="Neutral documentation of public statements and responses regarding controversial allegations. All information is sourced and verified." />
+        <title>Who Said What - Documenting Statements About Jews, Israel, and Antisemitism</title>
+        <meta name="description" content="Comprehensive documentation of scandals, comments, and quotes by notable people related to Jews, Israel, and antisemitism. All information is sourced and verified with academic-quality citations." />
       </Head>
 
       {/* Hero Section */}
@@ -23,19 +23,19 @@ export default function Home({ allCases, allProfiles, allEvents }) {
         <div className="hero-content">
           <h1>Who Said What</h1>
           <p className="hero-subtitle">
-            Factual Documentation of Public Statements and Responses
+            Documenting scandals, comments, and quotes by notable people related to Jews, Israel, and antisemitism
           </p>
           <p className="hero-description">
-            A comprehensive, neutral resource documenting public statements, allegations, and responses 
-            related to controversial incidents. We maintain strict editorial standards, cite all sources, 
-            and present information without bias or speculation.
+            A comprehensive resource for tracking public statements, controversies, and incidents involving notable figures 
+            and their comments about Jewish people, Israel, or antisemitic content. We maintain strict editorial standards 
+            and provide detailed source documentation with academic-quality citations for all documented incidents.
           </p>
           <div className="hero-actions">
             <Link href="/cases" className="btn btn-primary">
               Browse Case Studies
             </Link>
             <Link href="/events" className="btn btn-outline">
-              View Timeline
+              View Events
             </Link>
             <Link href="/profiles" className="btn btn-outline">
               View Profiles
@@ -47,14 +47,14 @@ export default function Home({ allCases, allProfiles, allEvents }) {
       {/* Key Features */}
       <section className="features-section">
         <div className="content-container">
-          <h2>Our Approach</h2>
+          <h2>Our Mission</h2>
           <div className="features-grid">
             <div className="feature-card">
               <div className="feature-icon">📋</div>
-              <h3>Factual Documentation</h3>
+              <h3>Focused Documentation</h3>
               <p>
-                All information is sourced from verified public records, official statements, 
-                and credible media reports. We document what was said, when, and by whom.
+                We specifically document public statements, scandals, and controversies by notable people 
+                related to Jews, Israel, and antisemitism. Every incident is thoroughly researched and verified.
               </p>
             </div>
             <div className="feature-card">
@@ -62,23 +62,23 @@ export default function Home({ allCases, allProfiles, allEvents }) {
               <h3>Neutral Presentation</h3>
               <p>
                 We maintain strict neutrality, presenting facts without editorial commentary 
-                or bias. Our goal is accurate documentation, not judgment or advocacy.
+                or bias. Our goal is accurate documentation of what was said and the consequences.
               </p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">🔍</div>
-              <h3>Verified Sources</h3>
+              <h3>Academic Citations</h3>
               <p>
-                Every claim is backed by credible sources. We cite court documents, 
-                official statements, and established media reports to ensure accuracy.
+                Every claim includes clickable citations with links to original sources and archived versions. 
+                We follow academic standards with comprehensive bibliographic information.
               </p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">📊</div>
-              <h3>Comprehensive Analysis</h3>
+              <h3>Complete Context</h3>
               <p>
-                We document not just the statements themselves, but also the responses, 
-                consequences, and broader context surrounding each incident.
+                We document the full context: the original statements, immediate responses, 
+                business consequences, and long-term impact on careers and public discourse.
               </p>
             </div>
           </div>
@@ -90,7 +90,7 @@ export default function Home({ allCases, allProfiles, allEvents }) {
         <div className="content-container">
           <div className="section-header">
             <h2>Recent Case Studies</h2>
-            <p>Latest documented incidents and their documented responses</p>
+            <p>Latest documented incidents involving statements about Jews, Israel, and antisemitism</p>
           </div>
           
           <div className="cases-grid">
@@ -130,7 +130,7 @@ export default function Home({ allCases, allProfiles, allEvents }) {
         <div className="content-container">
           <div className="section-header">
             <h2>Featured Profiles</h2>
-            <p>Public figures and organizations documented in our case studies</p>
+            <p>Notable figures and organizations involved in documented incidents related to Jewish topics</p>
           </div>
           
           <div className="profiles-grid">

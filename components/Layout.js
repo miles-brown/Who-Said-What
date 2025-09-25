@@ -2,7 +2,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 
-export default function Layout({ children, title = "Who Said What", description = "Factual documentation of public statements and responses" }) {
+export default function Layout({ children, title = "Who Said What", description = "Documenting scandals, comments, and quotes by notable people related to Jews, Israel, and antisemitism" }) {
   const router = useRouter()
   
   const isActive = (pathname) => {
@@ -74,8 +74,9 @@ export default function Layout({ children, title = "Who Said What", description 
           <div className="footer-section">
             <h4>About This Project</h4>
             <p>
-              Who Said What provides neutral, fact-based documentation of public statements 
-              and responses. All information is sourced and verified for accuracy.
+              Who Said What documents scandals, comments, and quotes by notable people 
+              related to Jews, Israel, and antisemitism. All information includes 
+              academic-quality citations and is verified for accuracy.
             </p>
           </div>
           
@@ -92,9 +93,9 @@ export default function Layout({ children, title = "Who Said What", description 
           <div className="footer-section">
             <h4>Standards</h4>
             <p>
-              We maintain strict editorial standards, cite all sources, 
-              and present information without bias. Our goal is factual 
-              accuracy and neutral documentation.
+              We maintain strict editorial standards with academic-quality citations, 
+              neutral presentation, and comprehensive source documentation. Every claim 
+              includes clickable links to original and archived sources.
             </p>
           </div>
           
